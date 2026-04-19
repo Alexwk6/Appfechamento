@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Sistema de Fechamento de Caixa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        @media print {
+            body { margin: 0; padding: 0; font-size: 10pt; }
+            .max-w-5xl { max-width: 100%; }
+            .p-8 { padding: 1rem; }
+            .shadow-lg { box-shadow: none; }
+            .border { border: 1px solid #000; }
+            .rounded-lg { border-radius: 0; }
+            .hidden-print { display: none; }
+            .no-break { break-inside: avoid; }
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .history-item:hover {
+            background-color: #f3f4f6;
+            transform: translateX(4px);
+            transition: all 0.2s;
+        }
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+        }
+        .btn-icon {
+            transition: all 0.2s;
+        }
+        .btn-icon:hover {
+            transform: scale(1.05);
+        }
+        .vale-name-edit {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .vale-name-edit:hover {
+            background-color: #e5e7eb;
+        }
+        .edit-name-modal .modal-content {
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="login-container flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <div class="text-center mb-6">
+                <i class="fas fa-coins text-5xl text-indigo-600 mb-3"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Sistema de Caixa</h1>
+                <p class="text-gray-500">Faça login para continuar</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Usuário</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="loginUser" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Digite seu usuário" required>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Senha</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                        <input type="password" id="loginPassword" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Digite sua senha" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-semibold">Entrar</button>
+            </form>
+            <div class="mt-4 text-center text-sm text-gray-500">
+                <p>Usuários demo: admin/123 | usuario/123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal (oculto até login) -->
+    <div id="mainApp" style="display: none;" class="bg-gray-100 text-gray-800 min-h-screen p-5">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header com usuário e logout -->
+            <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-chart-line text-2xl text-indigo-600"></i>
+                    <h1 class="text-2xl font-bold">Fechamento de Caixa</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-gray-600"><i class="fas fa-user mr-2"></i><span id="currentUser">Usuário</span></span>
+                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- Abas de navegação -->
+            <div class="flex gap-2 mb-4 border-b bg-white rounded-t-lg px-4">
+                <button onclick="showTab('caixa')" id="tabCaixaBtn" class="py-3 px-6 font-semibold transition tab-active">📋 Fechamento</button>
+                <button onclick="showTab('historico')" id="tabHistoricoBtn" class="py-3 px-6 font-semibold transition text-gray-600">📚 Histórico & Edição</button>
+                <button onclick="showTab('graficos')" id="tabGraficosBtn" class="py-3 px-6 font-semibold transition text-gray-600">📊 Gráficos Mensais</button>
+            </div>
+
+            <!-- Aba: Caixa -->
+            <div id="tabCaixa" class="bg-white p-6 rounded-lg shadow-lg">
+                <form id="cashClosingForm">
+                    <div class="mb-4">
+                        <label class="text-xl font-bold">Data</label>
+                        <div class="flex items-center gap-3 mt-1">
+                            <input class="p-2 rounded-lg shadow-inner bg-gray-50 border border-gray-300 cursor-pointer" id="date" type="date" required onchange="updateDayOfWeek()">
+                            <span id="dayOfWeek" class="text-lg font-semibold bg-gray-100 px-4 py-2 rounded-lg">SEGUNDA-FEIRA</span>
+                        </div>
+                    </div>
+
+                    <!-- Vales com nomes editáveis -->
+                    <div class="bg-gray-50 mb-4 border border-gray-300 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold"><i class="fas fa-users mr-2"></i>Vales</h3>
+                            <button type="button" onclick="openEditValesNamesModal()" class="bg-indigo-500 text-white px-3 py-1 rounded text-sm hover:bg-indigo-600">
+                                <i class="fas fa-edit"></i> Editar Nomes
+                            </button>
+                        </div>
+                        <div id="valesContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <!-- Os campos de vale serão gerados dinamicamente baseado nos nomes salvos -->
+                        </div>
+                    </div>
+
+                    <!-- Fretes com botão de excluir -->
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xl font-bold"><i class="fas fa-truck mr-2"></i>Fretes</h3>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="addFreteRow()" class="bg-green-500 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus"></i> Adicionar</button>
+                            </div>
+                        </div>
+                        <div id="freteContainer">
+                            <!-- Linhas de frete serão adicionadas aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Receitas e Despesas Dinâmicas -->
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="border p-3 rounded-lg bg-gray-50">
+                            <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-lg"><i class="fas fa-plus-circle text-green-600"></i> Receitas</h3><button type="button" onclick="addReceitaRow()" class="bg-blue-500 text-white px-2 py-1 rounded text-sm"><i class="fas fa-plus"></i></button></div>
+                            <div id="receitaContainer">
+                                <div class="flex gap-2 mb-2"><input class="flex-1 p-2 border rounded text-sm" placeholder="Descrição"><div class="relative w-32"><input class="w-full p-2 pl-6 border rounded" placeholder="Valor" step="0.01" oninput="calculateTotals()"><span class="absolute left-2 top-2 text-xs">R$</span></div></div>
+                            </div>
+                        </div>
+                        <div class="border p-3 rounded-lg bg-gray-50">
+                            <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-lg"><i class="fas fa-minus-circle text-red-600"></i> Despesas</h3><button type="button" onclick="addDespesaRow()" class="bg-blue-500 text-white px-2 py-1 rounded text-sm"><i class="fas fa-plus"></i></button></div>
+                            <div id="despesaContainer">
+                                <div class="flex gap-2 mb-2"><input class="flex-1 p-2 border rounded text-sm" placeholder="Descrição"><div class="relative w-32"><input class="w-full p-2 pl-6 border rounded" placeholder="Valor" step="0.01" oninput="calculateTotals()"><span class="absolute left-2 top-2 text-xs">R$</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Totais e Ações -->
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div class="bg-indigo-50 p-3 rounded"><label class="font-semibold">Total Frete Dinheiro</label><input class="w-full p-2 border rounded bg-white" id="totalFreteDinheiro" readonly></div>
+                        <div class="bg-yellow-50 p-3 rounded"><label class="font-semibold">Total Vales</label><input class="w-full p-2 border rounded bg-white" id="totalVales" readonly></div>
+                        <div class="bg-blue-50 p-3 rounded"><label class="font-semibold">Troco Anterior</label><input class="w-full p-2 border rounded" id="trocoAnterior" type="number" step="0.01" oninput="calculateTotals()"></div>
+                        <div class="bg-green-50 p-3 rounded"><label class="font-semibold">Valor em Caixa</label><input class="w-full p-2 border rounded bg-white font-bold" id="valorCaixa" readonly></div>
+                        <div class="bg-purple-50 p-3 rounded"><label class="font-semibold">Dinheiro Total</label><input class="w-full p-2 border rounded" id="dinheiroTotal" type="number" step="0.01" oninput="calculateTotals()"></div>
+                        <div class="bg-orange-50 p-3 rounded"><label class="font-semibold">Retirada</label><input class="w-full p-2 border rounded" id="retirada" type="number" step="0.01" oninput="calculateTotals()"></div>
+                        <div class="bg-teal-50 p-3 rounded"><label class="font-semibold">Troco no Caixa</label><input class="w-full p-2 border rounded bg-white" id="trocoCaixa" readonly></div>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" onclick="exportToPDF()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                        <button type="button" onclick="printForm()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"><i class="fas fa-print"></i> Imprimir</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Aba: Histórico e Edição -->
+            <div id="tabHistorico" style="display: none;" class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-4"><i class="fas fa-history"></i> Registros Salvos</h2>
+                <div class="mb-4 flex gap-2"><input type="text" id="searchHistory" placeholder="Buscar por data..." class="border rounded p-2 flex-1"><button onclick="filterHistory()" class="bg-gray-500 text-white px-4 rounded"><i class="fas fa-search"></i></button></div>
+                <div id="savedFilesList" class="max-h-96 overflow-y-auto border rounded-lg divide-y"></div>
+                <div id="editModal" class="modal">
+                    <div class="modal-content bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <h3 class="text-xl font-bold mb-4">Editar Registro</h3>
+                        <div id="editFormContainer"></div>
+                        <div class="flex justify-end gap-2 mt-4"><button onclick="closeEditModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button><button onclick="saveEditedRecord()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Alterações</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Gráficos Mensais -->
+            <div id="tabGraficos" style="display: none;" class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-4"><i class="fas fa-chart-bar"></i> Resumo Mensal</h2>
+                <div class="mb-4"><input type="month" id="monthSelector" class="border rounded p-2"></div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <canvas id="monthlyChart" height="250"></canvas>
+                    <canvas id="paymentChart" height="250"></canvas>
+                </div>
+                <div class="mt-6 p-4 bg-gray-100 rounded">
+                    <h3 class="font-bold text-lg">Estatísticas do Mês</h3>
+                    <div id="monthStats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar nomes dos vales -->
+    <div id="editValesNamesModal" class="modal edit-name-modal">
+        <div class="modal-content bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4"><i class="fas fa-users"></i> Editar Nomes dos Vendedores</h3>
+            <div id="valesNamesList" class="space-y-3 mb-4"></div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeValesNamesModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
+                <button onclick="saveValesNames()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Nomes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DE NOMES DOS VALES (persistente)
+        let valesNames = ['Alex', 'Daniel', 'Mateus', 'Lima', 'Teodoro', 'Tiago'];
+        
+        // Carregar nomes salvos do localStorage
+        function loadValesNames() {
+            const saved = localStorage.getItem('valesNames');
+            if (saved) {
+                valesNames = JSON.parse(saved);
+            }
+            renderValesFields();
+        }
+        
+        // Salvar nomes no localStorage
+        function saveValesNamesToLocal() {
+            localStorage.setItem('valesNames', JSON.stringify(valesNames));
+        }
+        
+        // Renderizar campos de vale com os nomes atuais
+        function renderValesFields() {
+            const container = document.getElementById('valesContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            valesNames.forEach((name, index) => {
+                const id = `vale_${index}`;
+                const div = document.createElement('div');
+                div.className = 'vale-item';
+                div.innerHTML = `
+                    <label class="block font-semibold text-sm vale-name-label">${name}</label>
+                    <input class="w-full p-2 pl-7 border rounded-lg" id="${id}" type="number" step="0.01" oninput="calculateTotals()">
+                    <span class="text-xs text-gray-500">R$</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // Obter valores dos vales dinamicamente
+        function getValesValues() {
+            const values = {};
+            valesNames.forEach((name, index) => {
+                const input = document.getElementById(`vale_${index}`);
+                values[name] = input ? (parseFloat(input.value) || 0) : 0;
+            });
+            return values;
+        }
+        
+        function getTotalVales() {
+            let total = 0;
+            valesNames.forEach((_, index) => {
+                const input = document.getElementById(`vale_${index}`);
+                if (input) total += parseFloat(input.value) || 0;
+            });
+            return total;
+        }
+        
+        // Preencher vales a partir de dados salvos (compatibilidade com versão antiga)
+        function setValesValuesFromRecord(valeData) {
+            valesNames.forEach((name, index) => {
+                const input = document.getElementById(`vale_${index}`);
+                if (input && valeData[name]) {
+                    input.value = valeData[name];
+                } else if (input && valeData[name.toLowerCase()]) {
+                    input.value = valeData[name.toLowerCase()];
+                }
+            });
+        }
+        
+        // Modal para editar nomes
+        function openEditValesNamesModal() {
+            const modal = document.getElementById('editValesNamesModal');
+            const listContainer = document.getElementById('valesNamesList');
+            listContainer.innerHTML = '';
+            valesNames.forEach((name, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 items-center';
+                div.innerHTML = `
+                    <input type="text" class="flex-1 border rounded p-2" value="${escapeHtml(name)}" data-index="${idx}">
+                    <button type="button" onclick="removeValeName(${idx})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                `;
+                listContainer.appendChild(div);
+            });
+            // Botão para adicionar novo vendedor
+            const addBtn = document.createElement('div');
+            addBtn.className = 'mt-3';
+            addBtn.innerHTML = `<button type="button" onclick="addNewValeName()" class="bg-green-500 text-white px-3 py-1 rounded text-sm w-full"><i class="fas fa-plus"></i> Adicionar Vendedor</button>`;
+            listContainer.appendChild(addBtn);
+            modal.classList.add('active');
+        }
+        
+        function removeValeName(index) {
+            if (valesNames.length <= 1) {
+                showNotification('É necessário ter pelo menos um vendedor!', 'error');
+                return;
+            }
+            valesNames.splice(index, 1);
+            openEditValesNamesModal(); // Recarrega o modal
+        }
+        
+        function addNewValeName() {
+            valesNames.push('Novo Vendedor');
+            openEditValesNamesModal();
+        }
+        
+        function closeValesNamesModal() {
+            document.getElementById('editValesNamesModal').classList.remove('active');
+        }
+        
+        function saveValesNames() {
+            const inputs = document.querySelectorAll('#valesNamesList input[type="text"]');
+            const newNames = [];
+            inputs.forEach(input => {
+                const val = input.value.trim();
+                if (val) newNames.push(val);
+            });
+            if (newNames.length === 0) {
+                showNotification('Adicione pelo menos um nome!', 'error');
+                return;
+            }
+            valesNames = newNames;
+            saveValesNamesToLocal();
+            renderValesFields();
+            closeValesNamesModal();
+            calculateTotals();
+            showNotification('Nomes dos vendedores atualizados!', 'success');
+        }
+        
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // FRETES COM BOTÃO DE EXCLUIR
+        let freteRowCounter = 0;
+        
+        function addFreteRow(data = null) {
+            const container = document.getElementById('freteContainer');
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'grid grid-cols-1 md:grid-cols-5 gap-2 mb-2 frete-row';
+            rowDiv.innerHTML = `
+                <input class="p-2 border rounded cte-input" placeholder="CTE" value="${data?.cte || ''}">
+                <select class="p-2 border rounded situacao-select"><option value="">Situação</option><option ${data?.situacao === 'Emissão' ? 'selected' : ''}>Emissão</option><option ${data?.situacao === 'Baixa' ? 'selected' : ''}>Baixa</option></select>
+                <input class="p-2 border rounded valor-frete" placeholder="Valor R$" value="${data?.valor || ''}" step="0.01">
+                <select class="p-2 border rounded pagamento"><option value="">Pagamento</option><option value="dinheiro" ${data?.pagamento === 'dinheiro' ? 'selected' : ''}>Dinheiro</option><option value="pix" ${data?.pagamento === 'pix' ? 'selected' : ''}>Pix</option><option value="a_pagar" ${data?.pagamento === 'a_pagar' ? 'selected' : ''}>A Pagar</option></select>
+                <div class="flex gap-1">
+                    <textarea class="p-2 border rounded flex-1" rows="1" placeholder="Obs">${data?.obs || ''}</textarea>
+                    <button type="button" onclick="removeFreteRow(this)" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(rowDiv);
+            attachFreteEvents(rowDiv);
+            updateTotalFreteDinheiro();
+        }
+        
+        function removeFreteRow(btn) {
+            const row = btn.closest('.frete-row');
+            if (row && document.querySelectorAll('.frete-row').length > 1) {
+                row.remove();
+                updateTotalFreteDinheiro();
+            } else {
+                // Se for a única linha, apenas limpa os campos
+                const inputs = row.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (input.type !== 'button') input.value = '';
+                });
+                updateTotalFreteDinheiro();
+                showNotification('A última linha não pode ser removida, apenas limpa!', 'info');
+            }
+        }
+        
+        function attachFreteEvents(row) {
+            row.querySelector('.valor-frete')?.addEventListener('input', updateTotalFreteDinheiro);
+            row.querySelector('.pagamento')?.addEventListener('change', updateTotalFreteDinheiro);
+        }
+        
+        function updateTotalFreteDinheiro() {
+            let total = 0;
+            document.querySelectorAll('#freteContainer .frete-row').forEach(row => {
+                const pag = row.querySelector('.pagamento')?.value;
+                const val = parseFloat(row.querySelector('.valor-frete')?.value) || 0;
+                if (pag === 'dinheiro') total += val;
+            });
+            document.getElementById('totalFreteDinheiro').value = total.toFixed(2);
+            calculateTotals();
+        }
+        
+        function getAllFretesData() {
+            const fretes = [];
+            document.querySelectorAll('#freteContainer .frete-row').forEach(row => {
+                fretes.push({
+                    cte: row.querySelector('.cte-input')?.value || '',
+                    situacao: row.querySelector('.situacao-select')?.value || '',
+                    valor: parseFloat(row.querySelector('.valor-frete')?.value) || 0,
+                    pagamento: row.querySelector('.pagamento')?.value || '',
+                    obs: row.querySelector('textarea')?.value || ''
+                });
+            });
+            return fretes;
+        }
+        
+        function loadFretesFromData(fretesData) {
+            const container = document.getElementById('freteContainer');
+            container.innerHTML = '';
+            if (fretesData && fretesData.length) {
+                fretesData.forEach(frete => addFreteRow(frete));
+            } else {
+                addFreteRow(); // linha padrão
+            }
+        }
+        
+        // USUÁRIOS
+        const users = { admin: '123', usuario: '123' };
+        let currentUserLogged = null;
+        let allRecords = [];
+        let monthlyChart = null, paymentChart = null;
+        
+        // LOGIN
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPassword').value;
+            if (users[user] && users[user] === pass) {
+                currentUserLogged = user;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('currentUser').innerText = user;
+                loadValesNames();
+                loadAllRecords();
+                showTab('caixa');
+                document.getElementById('date').valueAsDate = new Date();
+                updateDayOfWeek();
+                calculateTotals();
+                // Inicializar fretes com pelo menos uma linha
+                if (document.querySelectorAll('#freteContainer .frete-row').length === 0) {
+                    addFreteRow();
+                }
+            } else alert('Usuário ou senha inválidos');
+        });
+        
+        function logout() { localStorage.clear(); location.reload(); }
+        
+        async function loadAllRecords() {
+            allRecords = [];
+            const saved = localStorage.getItem('caixaRecords');
+            if (saved) allRecords = JSON.parse(saved);
+            renderHistoryList();
+            updateMonthlyChart();
+        }
+        
+        function saveRecordToLocalStorage(record) {
+            const index = allRecords.findIndex(r => r.date === record.date);
+            if (index !== -1) allRecords[index] = record;
+            else allRecords.push(record);
+            localStorage.setItem('caixaRecords', JSON.stringify(allRecords));
+            loadAllRecords();
+        }
+        
+        function renderHistoryList(filter = '') {
+            const container = document.getElementById('savedFilesList');
+            if (!container) return;
+            let filtered = [...allRecords];
+            if (filter) filtered = filtered.filter(r => r.date.includes(filter));
+            if (filtered.length === 0) { container.innerHTML = '<div class="p-4 text-center text-gray-500">Nenhum registro encontrado</div>'; return; }
+            container.innerHTML = filtered.map(rec => `
+                <div class="history-item p-3 flex justify-between items-center border-b hover:bg-gray-50">
+                    <div><i class="fas fa-calendar-alt mr-2 text-indigo-500"></i><strong>${formatDate(rec.date)}</strong> - Caixa: R$ ${rec.valores?.valorCaixa || 0}</div>
+                    <div class="flex gap-2">
+                        <button onclick="editRecord('${rec.date}')" class="text-blue-600 hover:underline"><i class="fas fa-edit"></i> Editar</button>
+                        <button onclick="deleteRecord('${rec.date}')" class="text-red-600 hover:underline"><i class="fas fa-trash"></i> Excluir</button>
+                        <button onclick="viewRecordPDF('${rec.date}')" class="text-green-600 hover:underline"><i class="fas fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function formatDate(dateStr) { if(!dateStr) return ''; const [y,m,d]=dateStr.split('-'); return `${d}/${m}/${y}`; }
+        
+        function editRecord(date) {
+            const record = allRecords.find(r => r.date === date);
+            if (!record) return;
+            const modal = document.getElementById('editModal');
+            const container = document.getElementById('editFormContainer');
+            container.innerHTML = `
+                <div class="space-y-3">
+                    <div><label>Data</label><input type="date" id="editDate" value="${record.date}" class="border p-2 w-full rounded"></div>
+                    <div><label>Total Vales</label><input id="editTotalVales" value="${record.valores?.totalVales || 0}" class="border p-2 w-full rounded"></div>
+                    <div><label>Valor Caixa</label><input id="editValorCaixa" value="${record.valores?.valorCaixa || 0}" class="border p-2 w-full rounded"></div>
+                    <div><label>Dinheiro Total</label><input id="editDinheiroTotal" value="${record.totais?.dinheiroTotal || 0}" class="border p-2 w-full rounded"></div>
+                    <div><label>Troco Caixa</label><input id="editTrocoCaixa" value="${record.totais?.trocoCaixa || 0}" class="border p-2 w-full rounded"></div>
+                    <div><label>Retirada</label><input id="editRetirada" value="${record.totais?.retirada || 0}" class="border p-2 w-full rounded"></div>
+                </div>
+            `;
+            modal.classList.add('active');
+            window.currentEditDate = date;
+        }
+        
+        function saveEditedRecord() {
+            const newDate = document.getElementById('editDate').value;
+            const index = allRecords.findIndex(r => r.date === window.currentEditDate);
+            if (index !== -1) {
+                allRecords[index].date = newDate;
+                allRecords[index].valores.totalVales = parseFloat(document.getElementById('editTotalVales').value) || 0;
+                allRecords[index].valores.valorCaixa = parseFloat(document.getElementById('editValorCaixa').value) || 0;
+                allRecords[index].totais.dinheiroTotal = parseFloat(document.getElementById('editDinheiroTotal').value) || 0;
+                allRecords[index].totais.trocoCaixa = parseFloat(document.getElementById('editTrocoCaixa').value) || 0;
+                allRecords[index].totais.retirada = parseFloat(document.getElementById('editRetirada').value) || 0;
+                localStorage.setItem('caixaRecords', JSON.stringify(allRecords));
+                loadAllRecords();
+            }
+            closeEditModal();
+            showNotification('Registro atualizado!', 'success');
+        }
+        
+        function deleteRecord(date) {
+            if (confirm(`Excluir registro de ${date}?`)) {
+                allRecords = allRecords.filter(r => r.date !== date);
+                localStorage.setItem('caixaRecords', JSON.stringify(allRecords));
+                loadAllRecords();
+                showNotification('Registro excluído', 'info');
+            }
+        }
+        
+        function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+        function filterHistory() { renderHistoryList(document.getElementById('searchHistory').value); }
+        
+        // SALVAR FORM
+        document.getElementById('cashClosingForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            if (!date) return alert('Selecione a data');
+            const formData = getAllFormData();
+            saveRecordToLocalStorage(formData);
+            showNotification('Salvo com sucesso!', 'success');
+        });
+        
+        function getAllFormData() {
+            const valesObj = {};
+            valesNames.forEach((name, idx) => {
+                const input = document.getElementById(`vale_${idx}`);
+                valesObj[name] = input ? (parseFloat(input.value) || 0) : 0;
+            });
+            return {
+                date: document.getElementById('date').value,
+                vales: valesObj,
+                valesNames: valesNames,
+                fretes: getAllFretesData(),
+                user: currentUserLogged,
+                valores: { totalFreteDinheiro: gv('totalFreteDinheiro'), totalVales: gv('totalVales'), trocoAnterior: gv('trocoAnterior'), valorCaixa: gv('valorCaixa') },
+                totais: { dinheiroTotal: gv('dinheiroTotal'), retirada: gv('retirada'), trocoCaixa: gv('trocoCaixa') },
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        function gv(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+        
+        function calculateTotals() {
+            const totalValesVal = getTotalVales();
+            document.getElementById('totalVales').value = totalValesVal.toFixed(2);
+            const totalReceita = Array.from(document.querySelectorAll('#receitaContainer input[placeholder="Valor"]')).reduce((s, inp) => s + (parseFloat(inp.value)||0),0);
+            const totalDespesa = Array.from(document.querySelectorAll('#despesaContainer input[placeholder="Valor"]')).reduce((s, inp) => s + (parseFloat(inp.value)||0),0);
+            const totalFreteDin = parseFloat(document.getElementById('totalFreteDinheiro').value)||0;
+            const trocoAnt = parseFloat(document.getElementById('trocoAnterior').value)||0;
+            const valorCaixa = totalReceita - totalDespesa + totalFreteDin + trocoAnt - totalValesVal;
+            document.getElementById('valorCaixa').value = valorCaixa.toFixed(2);
+            const dinheiroTotal = parseFloat(document.getElementById('dinheiroTotal').value)||0;
+            const retirada = parseFloat(document.getElementById('retirada').value)||0;
+            document.getElementById('trocoCaixa').value = (dinheiroTotal - retirada).toFixed(2);
+        }
+        
+        function addReceitaRow() { addDynamicRow('receitaContainer', 'Receita'); }
+        function addDespesaRow() { addDynamicRow('despesaContainer', 'Despesa'); }
+        function addDynamicRow(containerId, type) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div'); div.className = 'flex gap-2 mb-2';
+            div.innerHTML = `<input class="flex-1 p-2 border rounded text-sm" placeholder="Descrição"><div class="relative w-32"><input class="w-full p-2 pl-6 border rounded" placeholder="Valor" step="0.01" oninput="calculateTotals()"><span class="absolute left-2 top-2 text-xs">R$</span></div><button type="button" onclick="this.parentElement.remove(); calculateTotals();" class="text-red-500"><i class="fas fa-trash"></i></button>`;
+            container.appendChild(div);
+        }
+        
+        function exportToPDF() {
+            const element = document.getElementById('tabCaixa').cloneNode(true);
+            element.style.padding = '20px';
+            const opt = { margin: 0.5, filename: `fechamento_${document.getElementById('date').value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+            showNotification('PDF gerado!', 'success');
+        }
+        
+        function viewRecordPDF(date) { alert(`Função de visualização PDF para ${date} disponível no menu de exportação.`); }
+        
+        function updateMonthlyChart() {
+            let month = document.getElementById('monthSelector').value;
+            if (!month) { const d = new Date(); month = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; document.getElementById('monthSelector').value = month; }
+            const filtered = allRecords.filter(r => r.date.startsWith(month));
+            let totalCaixa = 0, totalVales = 0, totalDinheiro = 0;
+            filtered.forEach(r => { totalCaixa += r.valores?.valorCaixa || 0; totalVales += r.valores?.totalVales || 0; totalDinheiro += r.totais?.dinheiroTotal || 0; });
+            const days = filtered.length;
+            const ctx = document.getElementById('monthlyChart')?.getContext('2d');
+            if (monthlyChart) monthlyChart.destroy();
+            monthlyChart = new Chart(ctx, { type: 'bar', data: { labels: ['Caixa Total', 'Total Vales', 'Dinheiro Total'], datasets: [{ label: `Valores (R$) - ${month}`, data: [totalCaixa, totalVales, totalDinheiro], backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'] }] } });
+            const ctx2 = document.getElementById('paymentChart')?.getContext('2d');
+            if (paymentChart) paymentChart.destroy();
+            paymentChart = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Caixa Líquido', 'Vales'], datasets: [{ data: [totalCaixa, totalVales], backgroundColor: ['#3b82f6', '#f59e0b'] }] } });
+            document.getElementById('monthStats').innerHTML = `<div class="bg-white p-2 rounded shadow"><strong>Dias:</strong> ${days}</div><div class="bg-white p-2 rounded shadow"><strong>Média Caixa:</strong> R$ ${days?(totalCaixa/days).toFixed(2):0}</div><div class="bg-white p-2 rounded shadow"><strong>Total Vales:</strong> R$ ${totalVales.toFixed(2)}</div><div class="bg-white p-2 rounded shadow"><strong>Total Frete Dinheiro:</strong> R$ ${filtered.reduce((s,r)=> s+(r.valores?.totalFreteDinheiro||0),0).toFixed(2)}</div>`;
+        }
+        
+        function showTab(tab) {
+            document.getElementById('tabCaixa').style.display = tab === 'caixa' ? 'block' : 'none';
+            document.getElementById('tabHistorico').style.display = tab === 'historico' ? 'block' : 'none';
+            document.getElementById('tabGraficos').style.display = tab === 'graficos' ? 'block' : 'none';
+            ['tabCaixaBtn','tabHistoricoBtn','tabGraficosBtn'].forEach(btn => document.getElementById(btn)?.classList.remove('tab-active','text-indigo-600'));
+            if(tab==='caixa') document.getElementById('tabCaixaBtn')?.classList.add('tab-active');
+            if(tab==='historico') document.getElementById('tabHistoricoBtn')?.classList.add('tab-active');
+            if(tab==='graficos') document.getElementById('tabGraficosBtn')?.classList.add('tab-active');
+            if(tab==='graficos') updateMonthlyChart();
+            if(tab==='historico') renderHistoryList();
+        }
+        
+        function updateDayOfWeek() { const date = document.getElementById('date').value; if(date){ const days=['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO']; document.getElementById('dayOfWeek').innerText = days[new Date(date).getUTCDay()]; } }
+        function printForm() { window.print(); }
+        function showNotification(msg, type) { const n = document.createElement('div'); n.className = `notification bg-${type==='success'?'green':type==='error'?'red':'blue'}-500`; n.innerText = msg; document.body.appendChild(n); setTimeout(()=>{ n.classList.add('fade-out'); setTimeout(()=>n.remove(),500); }, 3000); }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.getElementById('mainApp') && document.getElementById('loginScreen').style.display !== 'none') return;
+            document.getElementById('monthSelector')?.addEventListener('change', updateMonthlyChart);
+        });
+        
+        window.calculateTotals = calculateTotals;
+        window.updateTotalFreteDinheiro = updateTotalFreteDinheiro;
+        window.addFreteRow = addFreteRow;
+        window.removeFreteRow = removeFreteRow;
+        window.addReceitaRow = addReceitaRow;
+        window.addDespesaRow = addDespesaRow;
+        window.exportToPDF = exportToPDF;
+        window.printForm = printForm;
+        window.showTab = showTab;
+        window.editRecord = editRecord;
+        window.deleteRecord = deleteRecord;
+        window.closeEditModal = closeEditModal;
+        window.saveEditedRecord = saveEditedRecord;
+        window.filterHistory = filterHistory;
+        window.logout = logout;
+        window.viewRecordPDF = viewRecordPDF;
+        window.openEditValesNamesModal = openEditValesNamesModal;
+        window.closeValesNamesModal = closeValesNamesModal;
+        window.saveValesNames = saveValesNames;
+        window.removeValeName = removeValeName;
+        window.addNewValeName = addNewValeName;
+    </script>
+</body>
+</html>
