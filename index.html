@@ -9,6 +9,8 @@
   <title>Fechamento de Caixa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Biblioteca para gerar PDF diretamente -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -477,8 +479,8 @@
       </div>
       <div id="reportContent"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <!-- Botão Imprimir modificado para abrir popup com fechar -->
-        <button class="btn btn-primary" onclick="openReportPopup()">🖨️ Imprimir</button>
+        <!-- Botão Imprimir agora gera PDF diretamente -->
+        <button class="btn btn-primary" onclick="gerarPDFRelatorio()">🖨️ Gerar PDF</button>
         <button class="btn btn-success" onclick="openDashboard()">📊 Dashboard</button>
       </div>
     </div>
@@ -1029,74 +1031,74 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
       `;
     }
 
-    // NOVA FUNÇÃO: Abre popup com conteúdo do relatório e botão fechar
-    function openReportPopup() {
-      const reportContentDiv = document.getElementById('reportContent');
-      if (!reportContentDiv || !reportContentDiv.innerHTML.trim()) {
-        alert('Nenhum conteúdo de relatório para exibir.');
+    // FUNÇÃO QUE GERA O PDF DO RELATÓRIO ATUAL (última alteração solicitada)
+    function gerarPDFRelatorio() {
+      // Obtém o conteúdo atual do relatório que está sendo exibido no modal
+      const reportDiv = document.getElementById('reportContent');
+      if (!reportDiv || !reportDiv.innerHTML.trim() || reportDiv.innerHTML.includes('Nenhum fechamento')) {
+        alert('Não há dados de relatório para gerar o PDF. Selecione um período com fechamentos.');
         return;
       }
-      const contentHTML = reportContentDiv.innerHTML;
-      const title = currentReportType === 'month' ? 'Relatório Mensal' : 'Relatório Anual';
-      const popup = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-      if (!popup) {
-        alert('Permita pop-ups para visualizar o relatório.');
-        return;
+
+      // Define o título conforme o tipo de relatório
+      let titulo = '';
+      if (currentReportType === 'month') {
+        const mesAno = document.getElementById('reportMonth').value;
+        if (mesAno) {
+          const [ano, mes] = mesAno.split('-');
+          const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+          titulo = `Relatório Mensal - ${meses[parseInt(mes)-1]} / ${ano}`;
+        } else titulo = 'Relatório Mensal';
+      } else {
+        const ano = document.getElementById('reportYear').value;
+        titulo = `Relatório Anual - ${ano}`;
       }
-      popup.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>${title}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; padding: 20px; }
-            .popup-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; position: relative; }
-            .popup-header { background: #16a34a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-            .popup-header h2 { font-size: 1.25rem; font-weight: 600; margin: 0; }
-            .close-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; line-height: 1; transition: opacity 0.2s; padding: 0 8px; }
-            .close-btn:hover { opacity: 0.7; }
-            .report-body { padding: 24px; }
-            .print-btn { background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 16px; display: inline-block; }
-            .print-btn:hover { background: #15803d; }
-            .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-            .summary-item { background: #f1f5f9; padding: 14px; border-radius: 12px; text-align: center; }
-            .summary-label { font-size: 0.75rem; color: #475569; margin-bottom: 4px; }
-            .summary-value { font-size: 1.1rem; font-weight: 600; }
-            .green { color: #16a34a; }
-            .red { color: #dc2626; }
-            .history-item { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
-            .history-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-            .history-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
-            .history-badge.ok { background: #dcfce7; color: #16a34a; }
-            .history-badge.diff { background: #fee2e2; color: #dc2626; }
-            @media print {
-              .popup-header, .print-btn { display: none; }
-              body { background: white; padding: 0; }
-              .popup-container { box-shadow: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="popup-container">
-            <div class="popup-header">
-              <h2>${title}</h2>
-              <button class="close-btn" onclick="window.close()">✕</button>
-            </div>
-            <div class="report-body">
-              <button class="print-btn" onclick="window.print()">🖨️ Imprimir Relatório</button>
-              <div id="popupReportContent">${contentHTML}</div>
-            </div>
-          </div>
-          <script>
-            // Garantir que o conteúdo seja renderizado corretamente
-            document.getElementById('popupReportContent').innerHTML = \`${contentHTML.replace(/`/g, '\\`')}\`;
-          <\/script>
-        </body>
-        </html>
-      `);
-      popup.document.close();
+
+      // Cria um elemento container para o PDF com estilo apropriado
+      const containerPDF = document.createElement('div');
+      containerPDF.style.padding = '20px';
+      containerPDF.style.fontFamily = 'Arial, sans-serif';
+      containerPDF.style.backgroundColor = 'white';
+      containerPDF.style.color = '#0f172a';
+      containerPDF.style.maxWidth = '1000px';
+      containerPDF.style.margin = '0 auto';
+
+      // Adiciona cabeçalho com logo e data
+      const header = document.createElement('div');
+      header.style.textAlign = 'center';
+      header.style.marginBottom = '30px';
+      header.style.borderBottom = '2px solid #16a34a';
+      header.style.paddingBottom = '10px';
+      header.innerHTML = `
+        <h1 style="color: #16a34a; margin-bottom: 5px;">${titulo}</h1>
+        <p style="color: #64748b;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+      `;
+      containerPDF.appendChild(header);
+
+      // Clona o conteúdo do relatório (summary-grid + lista de itens) e adiciona
+      const conteudoClonado = reportDiv.cloneNode(true);
+      // Remove possíveis estilos de hover/backgrounds desnecessários para o PDF
+      conteudoClonado.style.backgroundColor = 'transparent';
+      conteudoClonado.querySelectorAll('.history-item').forEach(item => {
+        item.style.backgroundColor = '#f9fafb';
+        item.style.border = '1px solid #e2e8f0';
+      });
+      containerPDF.appendChild(conteudoClonado);
+
+      // Opções de configuração do html2pdf: retrato, margens adequadas, escala
+      const opt = {
+        margin:        [0.5, 0.5, 0.5, 0.5],
+        filename:     `${titulo.replace(/\s/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, letterRendering: true, useCORS: false, logging: false },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Gera o PDF e faz o download automático
+      html2pdf().set(opt).from(containerPDF).save().catch(err => {
+        console.error('Erro ao gerar PDF:', err);
+        alert('Ocorreu um erro ao tentar gerar o PDF. Tente novamente ou atualize a página.');
+      });
     }
 
     // -------------------- DASHBOARD MODAL + COMPARTILHAMENTO --------------------
@@ -1140,7 +1142,7 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         <div class="chart-container"><canvas id="dashboardChartCanvas" style="max-height:300px;width:100%;"></canvas></div>
         <table><thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead><tbody>
           ${sorted.map(h => `
-            <tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>
+             <tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>
           `).join('')}
         </tbody></table>
       `;
@@ -1210,7 +1212,7 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
     function formatDate(d) { return new Date(d).toLocaleDateString('pt-BR'); }
     function formatTime(d) { return new Date(d).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}); }
     function formatMonthYear(mv) { const [y,m]=mv.split('-'); const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return `${months[parseInt(m)-1]} ${y}`; }
-    function openModal(id) { document.getElementById(id).classList.add('active'); if(id==='modalCloseRegister') updateCloseModal(); if(id==='modalMonthlyReport') generateReport(); }
+    function openModal(id) { document.getElementById(id).classList.add('active'); if(id==='modalCloseRegister') updateCloseModal(); if(id==='modalMonthlyReport') { generateReport(); } }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     function setupForms() {
       document.getElementById('formOpenRegister').addEventListener('submit', e=>{ e.preventDefault(); openRegister(); });
