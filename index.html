@@ -479,7 +479,7 @@
       </div>
       <div id="reportContent"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <!-- Botão Imprimir agora gera PDF diretamente -->
+        <!-- Botão Gerar PDF - chama a função que baixa o PDF -->
         <button class="btn btn-primary" onclick="gerarPDFRelatorio()">🖨️ Gerar PDF</button>
         <button class="btn btn-success" onclick="openDashboard()">📊 Dashboard</button>
       </div>
@@ -526,7 +526,8 @@
       <div id="dashboardPopupContent" class="dashboard-container"></div>
       <div class="btn-group" style="margin-top: 16px;">
         <button class="btn btn-outline" onclick="closeModal('modalDashboardPopup')">Fechar</button>
-        <button class="btn btn-primary" id="shareDashboardBtn">📤 Compartilhar</button>
+        <!-- Botão Compartilhar agora sempre baixa o arquivo HTML do dashboard -->
+        <button class="btn btn-primary" id="shareDashboardBtn">📥 Baixar Dashboard (HTML)</button>
       </div>
     </div>
   </div>
@@ -946,7 +947,7 @@ ${h.dailyTotalSales ? `<p>Venda Diária: ${formatCurrency(h.dailyTotalSales)}</p
 ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
 <h3>Transações</h3>
 <table><thead><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead>
-<tbody>${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}
+<tbody>${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td>`).join('')}
 </tbody></table></body></html>`;
     }
 
@@ -1031,16 +1032,13 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
       `;
     }
 
-    // FUNÇÃO QUE GERA O PDF DO RELATÓRIO ATUAL (última alteração solicitada)
+    // FUNÇÃO QUE GERA O PDF DO RELATÓRIO ATUAL (download direto)
     function gerarPDFRelatorio() {
-      // Obtém o conteúdo atual do relatório que está sendo exibido no modal
       const reportDiv = document.getElementById('reportContent');
       if (!reportDiv || !reportDiv.innerHTML.trim() || reportDiv.innerHTML.includes('Nenhum fechamento')) {
         alert('Não há dados de relatório para gerar o PDF. Selecione um período com fechamentos.');
         return;
       }
-
-      // Define o título conforme o tipo de relatório
       let titulo = '';
       if (currentReportType === 'month') {
         const mesAno = document.getElementById('reportMonth').value;
@@ -1053,8 +1051,6 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         const ano = document.getElementById('reportYear').value;
         titulo = `Relatório Anual - ${ano}`;
       }
-
-      // Cria um elemento container para o PDF com estilo apropriado
       const containerPDF = document.createElement('div');
       containerPDF.style.padding = '20px';
       containerPDF.style.fontFamily = 'Arial, sans-serif';
@@ -1062,8 +1058,6 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
       containerPDF.style.color = '#0f172a';
       containerPDF.style.maxWidth = '1000px';
       containerPDF.style.margin = '0 auto';
-
-      // Adiciona cabeçalho com logo e data
       const header = document.createElement('div');
       header.style.textAlign = 'center';
       header.style.marginBottom = '30px';
@@ -1074,18 +1068,13 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         <p style="color: #64748b;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
       `;
       containerPDF.appendChild(header);
-
-      // Clona o conteúdo do relatório (summary-grid + lista de itens) e adiciona
       const conteudoClonado = reportDiv.cloneNode(true);
-      // Remove possíveis estilos de hover/backgrounds desnecessários para o PDF
       conteudoClonado.style.backgroundColor = 'transparent';
       conteudoClonado.querySelectorAll('.history-item').forEach(item => {
         item.style.backgroundColor = '#f9fafb';
         item.style.border = '1px solid #e2e8f0';
       });
       containerPDF.appendChild(conteudoClonado);
-
-      // Opções de configuração do html2pdf: retrato, margens adequadas, escala
       const opt = {
         margin:        [0.5, 0.5, 0.5, 0.5],
         filename:     `${titulo.replace(/\s/g, '_')}.pdf`,
@@ -1093,15 +1082,13 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         html2canvas:  { scale: 2, letterRendering: true, useCORS: false, logging: false },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
-
-      // Gera o PDF e faz o download automático
       html2pdf().set(opt).from(containerPDF).save().catch(err => {
         console.error('Erro ao gerar PDF:', err);
-        alert('Ocorreu um erro ao tentar gerar o PDF. Tente novamente ou atualize a página.');
+        alert('Ocorreu um erro ao tentar gerar o PDF. Tente novamente.');
       });
     }
 
-    // -------------------- DASHBOARD MODAL + COMPARTILHAMENTO --------------------
+    // -------------------- DASHBOARD MODAL + DOWNLOAD HTML --------------------
     function openDashboard() {
       let data, title;
       if (currentReportType === 'month') {
@@ -1142,7 +1129,7 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         <div class="chart-container"><canvas id="dashboardChartCanvas" style="max-height:300px;width:100%;"></canvas></div>
         <table><thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead><tbody>
           ${sorted.map(h => `
-             <tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>
+            <tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>
           `).join('')}
         </tbody></table>
       `;
@@ -1170,22 +1157,20 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
         options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
       });
     }
-    function shareDashboardAsHtml() {
-      if (!currentDashboardData) return;
-      const html = generateStandaloneDashboardHtml(currentDashboardData, currentDashboardTitle);
-      const blob = new Blob([html], { type: 'text/html' });
-      const file = new File([blob], 'dashboard.html', { type: 'text/html' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ title: currentDashboardTitle, files: [file] }).catch(e=>console.log(e));
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'dashboard.html';
-        a.click();
-        URL.revokeObjectURL(url);
-        alert('Arquivo HTML gerado e baixado. Compartilhe o arquivo para visualizar o dashboard.');
+    // Função modificada: agora sempre baixa o arquivo HTML (sem tentar compartilhar nativamente)
+    function baixarDashboardHTML() {
+      if (!currentDashboardData) {
+        alert('Nenhum dashboard carregado para download.');
+        return;
       }
+      const htmlCompleto = generateStandaloneDashboardHtml(currentDashboardData, currentDashboardTitle);
+      const blob = new Blob([htmlCompleto], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentDashboardTitle.replace(/\s/g, '_')}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
     function generateStandaloneDashboardHtml(data, title) {
       const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
@@ -1228,7 +1213,8 @@ ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
     document.querySelectorAll('.modal-overlay').forEach(modal=>{ modal.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('active'); }); });
     document.addEventListener('DOMContentLoaded',()=>{
       loadFromStorage(); updateCurrentDate(); checkOpenRegister(); setupForms(); populateYearSelect(); setupNavigation();
-      document.getElementById('shareDashboardBtn').addEventListener('click', shareDashboardAsHtml);
+      // Associa o botão de download do dashboard à função de baixar HTML
+      document.getElementById('shareDashboardBtn').addEventListener('click', baixarDashboardHTML);
     });
   </script>
 </body>
