@@ -9,7 +9,6 @@
   <title>Fechamento de Caixa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Biblioteca para gerar PDF diretamente -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -201,7 +200,6 @@
     .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .modal-title { font-size: 1.25rem; font-weight: 600; }
     .modal-close { width: 32px; height: 32px; border: none; background: var(--border); border-radius: 50%; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    /* Dashboard Modal específico */
     .dashboard-modal .modal { max-width: 90vw; width: 90%; max-height: 85vh; border-radius: 20px; }
     .dashboard-container { padding: 10px; }
     .dashboard-container .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -273,7 +271,6 @@
     .file-remove { margin-left: auto; background: none; border: none; color: var(--danger); cursor: pointer; }
     @media print { body { background: white; } .bottom-nav, .btn, .modal-overlay { display: none !important; } .container { max-width: 100%; } }
     @media (min-width: 768px) { .container { padding: 24px; } .modal { border-radius: 20px; margin: auto; max-height: 80vh; } .modal-overlay { align-items: center; } }
-    /* Loading spinner */
     .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; margin-right: 8px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .btn-loading { opacity: 0.7; cursor: wait; }
@@ -286,7 +283,6 @@
     <p class="header-subtitle" id="currentDate"></p>
   </header>
 
-  <!-- Tela Inicial -->
   <div id="screenHome" class="screen">
     <div class="container">
       <div class="card" style="text-align: center; padding: 40px 20px;">
@@ -299,7 +295,6 @@
     </div>
   </div>
 
-  <!-- Tela Abertura de Caixa -->
   <div id="screenOpenRegister" class="screen">
     <div class="container">
       <div class="card">
@@ -322,7 +317,6 @@
     </div>
   </div>
 
-  <!-- Tela Dashboard (Caixa aberto) -->
   <div id="screenDashboard" class="screen">
     <div class="container">
       <div class="summary-grid">
@@ -349,7 +343,6 @@
     </div>
   </div>
 
-  <!-- Tela Histórico -->
   <div id="screenHistory" class="screen">
     <div class="container">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -360,12 +353,10 @@
     </div>
   </div>
 
-  <!-- Tela Detalhes do Caixa -->
   <div id="screenDetail" class="screen">
     <div class="container"><div id="detailContent"></div></div>
   </div>
 
-  <!-- Modal Adicionar Transação -->
   <div id="modalAddTransaction" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -409,7 +400,6 @@
     </div>
   </div>
 
-  <!-- Modal Fechar Caixa -->
   <div id="modalCloseRegister" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -459,7 +449,6 @@
     </div>
   </div>
 
-  <!-- Modal Relatório Mensal/Anual -->
   <div id="modalMonthlyReport" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -483,13 +472,12 @@
       </div>
       <div id="reportContent"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <button class="btn btn-primary" id="btnGerarPDF" onclick="gerarPDFRelatorio()">🖨️ Gerar PDF</button>
+        <button class="btn btn-primary" id="btnGerarPDF" onclick="compartilharOuBaixarPDF()">📄 Compartilhar/PDF</button>
         <button class="btn btn-success" onclick="openDashboard()">📊 Dashboard</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Editar Histórico -->
   <div id="modalEditHistory" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -519,7 +507,6 @@
     </div>
   </div>
 
-  <!-- Modal Dashboard Popup -->
   <div id="modalDashboardPopup" class="modal-overlay dashboard-modal">
     <div class="modal">
       <div class="modal-header">
@@ -529,12 +516,11 @@
       <div id="dashboardPopupContent" class="dashboard-container"></div>
       <div class="btn-group" style="margin-top: 16px;">
         <button class="btn btn-outline" onclick="closeModal('modalDashboardPopup')">Fechar</button>
-        <button class="btn btn-primary" id="shareDashboardBtn">📥 Baixar Dashboard (HTML)</button>
+        <button class="btn btn-primary" id="shareDashboardBtn">📤 Compartilhar HTML</button>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" data-screen="screenDashboard" onclick="navigateTo('screenDashboard', this)">
       <span class="nav-icon">🏠</span><span>Início</span>
@@ -545,37 +531,17 @@
   </nav>
 
   <script>
-    // -------------------- ESTADO --------------------
-    let state = {
-      currentRegister: null,
-      transactions: [],
-      history: [],
-      selectedFile: null
-    };
+    // -------------------- ESTADO (idêntico ao original) --------------------
+    let state = { currentRegister: null, transactions: [], history: [], selectedFile: null };
     let currentReportType = 'month';
     let navigationStack = [];
     let currentDashboardData = null;
     let currentDashboardTitle = '';
 
-    // -------------------- PERSISTÊNCIA --------------------
-    function loadFromStorage() {
-      const saved = localStorage.getItem('cashRegisterApp');
-      if (saved) {
-        const data = JSON.parse(saved);
-        state.currentRegister = data.currentRegister;
-        state.transactions = data.transactions || [];
-        state.history = data.history || [];
-      }
-    }
-    function saveToStorage() {
-      localStorage.setItem('cashRegisterApp', JSON.stringify({
-        currentRegister: state.currentRegister,
-        transactions: state.transactions,
-        history: state.history
-      }));
-    }
+    function loadFromStorage() { const saved = localStorage.getItem('cashRegisterApp'); if (saved) { const data = JSON.parse(saved); state.currentRegister = data.currentRegister; state.transactions = data.transactions || []; state.history = data.history || []; } }
+    function saveToStorage() { localStorage.setItem('cashRegisterApp', JSON.stringify({ currentRegister: state.currentRegister, transactions: state.transactions, history: state.history })); }
 
-    // -------------------- NAVEGAÇÃO (resumida para brevidade - mantida igual) --------------------
+    // NAVEGAÇÃO (resumida mas funcional)
     function updateCurrentDate() { const now = new Date(); document.getElementById('currentDate').textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
     function getRootScreen() { return state.currentRegister ? 'screenDashboard' : 'screenHome'; }
     function getCurrentScreen() { const active = document.querySelector('.screen.active'); return active ? active.id : null; }
@@ -587,7 +553,7 @@
     function navigateTo(screenId, btn) { if (!state.currentRegister && screenId === 'screenDashboard') navigateToScreen('screenHome'); else navigateToScreen(screenId); }
     function setupNavigation() { const backBtn = document.getElementById('backButton'); backBtn.addEventListener('click', handleBackButton); window.addEventListener('popstate', function() { if (navigationStack.length > 0) { const prev = navigationStack.pop(); showScreenInternal(prev); } else { showScreenInternal(getRootScreen()); } updateBackButtonVisibility(); }); }
 
-    // -------------------- ABERTURA / FECHAMENTO CAIXA (mantido, apenas funções essenciais) --------------------
+    // CAIXA (funções essenciais)
     function checkOpenRegister() { if (state.currentRegister) { showScreenInternal('screenDashboard'); updateDashboard(); document.getElementById('bottomNav').style.display = 'flex'; } else { showScreenInternal('screenHome'); document.getElementById('bottomNav').style.display = 'none'; } updateBackButtonVisibility(); }
     function openRegister() { const operatorName = document.getElementById('operatorName').value || 'Operador'; const openingBalance = parseFloat(document.getElementById('openingBalance').value) || 0; state.currentRegister = { id: Date.now().toString(), operatorName, openingBalance, openedAt: new Date().toISOString(), status: 'open' }; state.transactions = []; saveToStorage(); checkOpenRegister(); navigationStack = []; document.getElementById('formOpenRegister').reset(); }
     function updateDashboard() { if (!state.currentRegister) return; const opening = state.currentRegister.openingBalance; const totalIncomeAll = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0); const totalExpensesAll = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0); const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpected = opening + cashIncome - cashExpenses; document.getElementById('openingBalanceDisplay').textContent = formatCurrency(opening); document.getElementById('totalIncome').textContent = formatCurrency(totalIncomeAll); document.getElementById('totalExpenses').textContent = formatCurrency(totalExpensesAll); document.getElementById('expectedBalance').textContent = formatCurrency(cashExpected); document.getElementById('cashTransactions').textContent = formatCurrency(cashExpected); renderTransactions(); }
@@ -600,22 +566,22 @@
     function calculateChange() { const counted = parseFloat(document.getElementById('countedBalance').value) || 0; const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0; document.getElementById('changeInRegister').textContent = formatCurrency(counted - withdrawal); const opening = state.currentRegister.openingBalance; const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpected = opening + cashIncome - cashExpenses; const diff = counted - cashExpected; const alertDiv = document.getElementById('differenceAlert'); if (counted > 0) { if (Math.abs(diff) < 0.01) alertDiv.innerHTML = `<div class="alert alert-success">✓ Caixa confere!</div>`; else if (diff > 0) alertDiv.innerHTML = `<div class="alert alert-warning">↑ Sobra de ${formatCurrency(diff)}</div>`; else alertDiv.innerHTML = `<div class="alert alert-danger">↓ Falta de ${formatCurrency(Math.abs(diff))}</div>`; alertDiv.style.display = 'block'; } else alertDiv.style.display = 'none'; }
     function closeRegister() { const dailyTotalSales = parseFloat(document.getElementById('dailyTotalSales').value); const counted = parseFloat(document.getElementById('countedBalance').value); const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0; const observations = document.getElementById('closeObservations').value; if (isNaN(dailyTotalSales)) { alert('Informe a venda total diária'); return; } if (isNaN(counted)) { alert('Informe o valor contado'); return; } const opening = state.currentRegister.openingBalance; const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0); const cashExpected = opening + cashIncome - cashExpenses; const diff = counted - cashExpected; const closedRegister = { ...state.currentRegister, closedAt: new Date().toISOString(), status: 'closed', closingBalance: cashExpected, countedBalance: counted, difference: diff, withdrawal, changeInRegister: counted - withdrawal, dailyTotalSales, observations, transactions: [...state.transactions], totalIncome: state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), totalExpenses: state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0) }; state.history.unshift(closedRegister); state.currentRegister = null; state.transactions = []; saveToStorage(); closeModal('modalCloseRegister'); document.getElementById('formCloseRegister').reset(); document.getElementById('differenceAlert').style.display = 'none'; checkOpenRegister(); navigationStack = []; alert('Caixa fechado com sucesso!'); }
 
-    // -------------------- HISTÓRICO (resumido - funções principais mantidas) --------------------
+    // HISTÓRICO
     function renderHistory() { const list = document.getElementById('historyList'); if (!state.history.length) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum fechamento registrado</p></div>`; return; } list.innerHTML = state.history.map((h, idx) => `<div class="history-item"><div class="history-header"><span class="history-date">${formatDate(h.closedAt)}</span><span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">${Math.abs(h.difference) < 0.01 ? '✓ Confere' : formatCurrency(h.difference)}</span></div><div class="history-stats"><span>💰 ${formatCurrency(h.closingBalance)}</span><span>📈 ${formatCurrency(h.totalIncome)}</span><span>📉 ${formatCurrency(h.totalExpenses)}</span>${h.dailyTotalSales ? `<span>🛒 ${formatCurrency(h.dailyTotalSales)}</span>` : ''}</div><div class="history-actions"><button class="edit-btn" onclick="editHistoryItem(${idx})">✏️ Editar</button><button class="delete-btn" onclick="deleteHistoryItem(${idx})">🗑️ Excluir</button></div></div>`).join(''); }
     function editHistoryItem(index) { const h = state.history[index]; document.getElementById('editHistoryIndex').value = index; document.getElementById('editDailyTotalSales').value = h.dailyTotalSales || 0; document.getElementById('editCountedBalance').value = h.countedBalance; document.getElementById('editWithdrawal').value = h.withdrawal || 0; document.getElementById('editObservations').value = h.observations || ''; openModal('modalEditHistory'); }
     function saveEditHistory() { const index = parseInt(document.getElementById('editHistoryIndex').value); if (isNaN(index)) return; const h = state.history[index]; if (!h) return; const newDaily = parseFloat(document.getElementById('editDailyTotalSales').value) || 0; const newCounted = parseFloat(document.getElementById('editCountedBalance').value) || 0; const newWithdrawal = parseFloat(document.getElementById('editWithdrawal').value) || 0; const newObs = document.getElementById('editObservations').value; const newDiff = newCounted - h.closingBalance; h.dailyTotalSales = newDaily; h.countedBalance = newCounted; h.withdrawal = newWithdrawal; h.observations = newObs; h.difference = newDiff; h.changeInRegister = newCounted - newWithdrawal; saveToStorage(); closeModal('modalEditHistory'); renderHistory(); alert('Fechamento atualizado com sucesso!'); }
     function deleteHistoryItem(index) { if (confirm('Tem certeza que deseja excluir este fechamento permanentemente?')) { state.history.splice(index, 1); saveToStorage(); renderHistory(); } }
-    function showDetail(index) { navigateToScreen('screenDetail'); const h = state.history[index]; document.getElementById('detailContent').innerHTML = `<div class="card"><h2>Fechamento - ${formatDate(h.closedAt)}</h2>... (detalhes)</div>`; } // resumido para brevidade
+    function showDetail(index) { navigateToScreen('screenDetail'); const h = state.history[index]; document.getElementById('detailContent').innerHTML = `<div class="card"><h2>Fechamento - ${formatDate(h.closedAt)}</h2><div class="summary-grid">...</div></div>`; } // simplificado
 
-    // -------------------- RELATÓRIOS (MENSAL/ANUAL) --------------------
+    // RELATÓRIOS
     function populateYearSelect() { const currentYear = new Date().getFullYear(); const years = []; for (let y = currentYear - 5; y <= currentYear + 1; y++) years.push(y); const select = document.getElementById('reportYear'); select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join(''); select.value = currentYear; }
     function setReportType(type) { currentReportType = type; const monthDiv = document.getElementById('monthSelector'); const yearDiv = document.getElementById('yearSelector'); if (type === 'month') { monthDiv.style.display = 'block'; yearDiv.style.display = 'none'; document.getElementById('reportTypeMonthly').classList.add('active'); document.getElementById('reportTypeYearly').classList.remove('active'); } else { monthDiv.style.display = 'none'; yearDiv.style.display = 'block'; document.getElementById('reportTypeMonthly').classList.remove('active'); document.getElementById('reportTypeYearly').classList.add('active'); } generateReport(); }
     function generateReport() { if (currentReportType === 'month') generateMonthlyReport(); else generateYearlyReport(); }
     function generateMonthlyReport() { const monthValue = document.getElementById('reportMonth').value; if (!monthValue) return; const [year, month] = monthValue.split('-').map(Number); const data = state.history.filter(h => { const d = new Date(h.closedAt); return d.getFullYear() === year && d.getMonth() + 1 === month; }); if (!data.length) { document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento</p></div>`; return; } const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0); const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0); const totalDiff = data.reduce((s,h)=>s+h.difference,0); const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0); document.getElementById('reportContent').innerHTML = `<div class="summary-grid"><div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${data.length}</div></div><div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div><div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div><div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div><div class="summary-item" style="grid-column: span 2; background:#dcfce7;"><div class="summary-label">Venda Total</div><div class="summary-value green">${formatCurrency(totalSales)}</div></div></div><div>${data.map(h => `<div class="history-item"><div class="history-header"><span>${formatDate(h.closedAt)}</span><span class="history-badge ${Math.abs(h.difference)<0.01?'ok':'diff'}">${Math.abs(h.difference)<0.01?'✓':formatCurrency(h.difference)}</span></div><div>📈 ${formatCurrency(h.totalIncome)}  📉 ${formatCurrency(h.totalExpenses)}</div></div>`).join('')}</div>`; }
     function generateYearlyReport() { const year = parseInt(document.getElementById('reportYear').value); const data = state.history.filter(h => new Date(h.closedAt).getFullYear() === year); if (!data.length) { document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento</p></div>`; return; } const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0); const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0); const totalDiff = data.reduce((s,h)=>s+h.difference,0); const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0); const months = {}; for (let i=1;i<=12;i++) months[i]={income:0,expenses:0,sales:0,count:0}; data.forEach(h=>{const m=new Date(h.closedAt).getMonth()+1; months[m].income+=h.totalIncome; months[m].expenses+=h.totalExpenses; months[m].sales+=h.dailyTotalSales||0; months[m].count++;}); const monthNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; let monthsHtml='<div><h4>Detalhamento Mensal</h4>'; for(let m=1;m<=12;m++) if(months[m].count) monthsHtml+=`<div class="history-item"><div class="history-header"><span>${monthNames[m-1]}</span><span class="history-badge ok">${months[m].count} fechamento(s)</span></div><div>📈 ${formatCurrency(months[m].income)}  📉 ${formatCurrency(months[m].expenses)}  🛒 ${formatCurrency(months[m].sales)}</div></div>`; monthsHtml+='</div>'; document.getElementById('reportContent').innerHTML = `<div class="summary-grid"><div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${data.length}</div></div><div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div><div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div><div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div><div class="summary-item" style="grid-column: span 2; background:#dcfce7;"><div class="summary-label">Venda Total</div><div class="summary-value green">${formatCurrency(totalSales)}</div></div></div>${monthsHtml}`; }
 
-    // DOWNLOAD DE PDF COM FALLBACK (melhorado)
-    function gerarPDFRelatorio() {
+    // COMPARTILHAR PDF (com fallback para download)
+    async function compartilharOuBaixarPDF() {
       const reportDiv = document.getElementById('reportContent');
       if (!reportDiv || !reportDiv.innerHTML.trim() || reportDiv.innerHTML.includes('Nenhum fechamento')) {
         alert('Não há dados de relatório para gerar o PDF. Selecione um período com fechamentos.');
@@ -630,21 +596,14 @@
       let titulo = '';
       if (currentReportType === 'month') {
         const mesAno = document.getElementById('reportMonth').value;
-        if (mesAno) {
-          const [ano, mes] = mesAno.split('-');
-          const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-          titulo = `Relatório Mensal - ${meses[parseInt(mes)-1]} / ${ano}`;
-        } else titulo = 'Relatório Mensal';
-      } else {
-        const ano = document.getElementById('reportYear').value;
-        titulo = `Relatório Anual - ${ano}`;
-      }
+        if (mesAno) { const [ano, mes] = mesAno.split('-'); const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; titulo = `Relatório Mensal - ${meses[parseInt(mes)-1]} / ${ano}`; }
+        else titulo = 'Relatório Mensal';
+      } else { const ano = document.getElementById('reportYear').value; titulo = `Relatório Anual - ${ano}`; }
       
       const containerPDF = document.createElement('div');
       containerPDF.style.padding = '20px';
       containerPDF.style.fontFamily = 'Arial, sans-serif';
       containerPDF.style.backgroundColor = 'white';
-      containerPDF.style.color = '#0f172a';
       containerPDF.style.maxWidth = '1000px';
       containerPDF.style.margin = '0 auto';
       const header = document.createElement('div');
@@ -659,30 +618,37 @@
       conteudoClonado.querySelectorAll('.history-item').forEach(item => { item.style.backgroundColor = '#f9fafb'; item.style.border = '1px solid #e2e8f0'; });
       containerPDF.appendChild(conteudoClonado);
       
-      const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename: `${titulo.replace(/\s/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, letterRendering: true, useCORS: false }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
-      
-      html2pdf().set(opt).from(containerPDF).save().then(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.classList.remove('btn-loading');
-      }).catch(err => {
-        console.error('PDF error:', err);
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.classList.remove('btn-loading');
-        // Fallback: abrir janela com conteúdo para impressão/salvar como PDF
-        const fallbackWin = window.open('', '_blank');
-        if (fallbackWin) {
-          fallbackWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo}</title><style>body{font-family:Arial;padding:20px;} .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;} .history-item{border:1px solid #ccc;padding:12px;margin-bottom:8px;}</style></head><body>${containerPDF.innerHTML}<p style="margin-top:30px; text-align:center;">🔹 Para salvar como PDF, use <strong>Ctrl+P (ou Cmd+P)</strong> e escolha "Salvar como PDF". 🔹</p></body></html>`);
-          fallbackWin.document.close();
-          fallbackWin.print();
+      try {
+        // Gerar PDF como Blob
+        const pdfBlob = await html2pdf().set({ margin: [0.5,0.5,0.5,0.5], image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } }).from(containerPDF).outputPdf('blob');
+        const file = new File([pdfBlob], `${titulo.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
+        // Tentar compartilhar via Web Share API
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: titulo, files: [file] });
+          alert('PDF compartilhado com sucesso!');
         } else {
-          alert('Não foi possível gerar o PDF automaticamente. Tente novamente ou atualize a página.');
+          // Fallback: baixar o arquivo
+          const url = URL.createObjectURL(pdfBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${titulo.replace(/\s/g, '_')}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          alert('PDF gerado e baixado automaticamente!');
         }
-      });
+      } catch (err) {
+        console.error('Erro ao gerar/compartilhar PDF:', err);
+        alert('Não foi possível gerar ou compartilhar o PDF. Tente novamente.');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+      }
     }
 
-    // -------------------- DASHBOARD MODAL + DOWNLOAD HTML MELHORADO --------------------
+    // DASHBOARD COMPARTILHAR HTML
     function openDashboard() {
       let data, title;
       if (currentReportType === 'month') {
@@ -723,24 +689,28 @@
       if (window.dashboardChart) window.dashboardChart.destroy();
       window.dashboardChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Entradas', data: incomeData, backgroundColor: '#22c55e' }, { label: 'Saídas', data: expensesData, backgroundColor: '#ef4444' }, { label: 'Venda Diária', data: salesData, backgroundColor: '#f59e0b' }] }, options: { responsive: true, maintainAspectRatio: true } });
     }
-    function baixarDashboardHTML() {
+    async function compartilharDashboardHTML() {
       if (!currentDashboardData) { alert('Nenhum dashboard carregado.'); return; }
       const htmlCompleto = generateStandaloneDashboardHtml(currentDashboardData, currentDashboardTitle);
       const blob = new Blob([htmlCompleto], { type: 'text/html' });
-      // Tenta download via link
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${currentDashboardTitle.replace(/\s/g, '_')}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
-      // Fallback: se em iOS ou falhar, exibe instrução
-      setTimeout(() => {
-        if (!navigator.userAgent.match(/iPhone|iPad|iPod/i)) return;
-        alert('Se o download não iniciar automaticamente, clique em "Fechar" e use o botão "Compartilhar" do navegador para salvar o arquivo.');
-      }, 500);
+      const file = new File([blob], `${currentDashboardTitle.replace(/\s/g, '_')}.html`, { type: 'text/html' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: currentDashboardTitle, files: [file] });
+          alert('Dashboard compartilhado com sucesso!');
+        } catch (err) { console.log('Compartilhamento cancelado ou erro:', err); }
+      } else {
+        // Fallback: download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentDashboardTitle.replace(/\s/g, '_')}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        alert('Dashboard baixado! Se deseja compartilhar, envie o arquivo.');
+      }
     }
     function generateStandaloneDashboardHtml(data, title) {
       const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
@@ -755,7 +725,7 @@
       return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f2f5;padding:20px;}.container{max-width:1200px;margin:auto;}h1{text-align:center;color:#16a34a;}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0;}.card{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}.card h3{color:#64748b;}.card .value{font-size:1.8rem;font-weight:bold;}.green{color:#22c55e;}.red{color:#ef4444;}.chart-container{background:white;border-radius:16px;padding:20px;margin:20px 0;}canvas{max-height:400px;width:100%;}table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;}th,td{padding:12px;border-bottom:1px solid #e2e8f0;text-align:left;}th{background:#f8fafc;}</style></head><body><div class="container"><h1>${title}</h1><div class="cards"><div class="card"><h3>Fechamentos</h3><div class="value">${data.length}</div></div><div class="card"><h3>Total Entradas</h3><div class="value green">${formatCurrency(totalIncome)}</div></div><div class="card"><h3>Total Saídas</h3><div class="value red">${formatCurrency(totalExpenses)}</div></div><div class="card"><h3>Diferença Total</h3><div class="value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div><div class="card"><h3>Venda Total</h3><div class="value green">${formatCurrency(totalSales)}</div></div></div><div class="chart-container"><canvas id="chartCanvas"></canvas></div><table><thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda</th></tr></thead><tbody>${sorted.map(h => `<tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>`).join('')}</tbody></table></div><script>const ctx=document.getElementById('chartCanvas').getContext('2d');new Chart(ctx,{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Entradas',data:${JSON.stringify(incomeData)},backgroundColor:'#22c55e'},{label:'Saídas',data:${JSON.stringify(expensesData)},backgroundColor:'#ef4444'},{label:'Venda Diária',data:${JSON.stringify(salesData)},backgroundColor:'#f59e0b'}]},options:{responsive:true}});<\/script></body></html>`;
     }
 
-    // -------------------- UTILITÁRIOS --------------------
+    // UTILITÁRIOS
     function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(v||0); }
     function formatDate(d) { return new Date(d).toLocaleDateString('pt-BR'); }
     function formatTime(d) { return new Date(d).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}); }
@@ -773,7 +743,7 @@
     document.querySelectorAll('.modal-overlay').forEach(modal=>{ modal.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('active'); }); });
     document.addEventListener('DOMContentLoaded',()=>{
       loadFromStorage(); updateCurrentDate(); checkOpenRegister(); setupForms(); populateYearSelect(); setupNavigation();
-      document.getElementById('shareDashboardBtn').addEventListener('click', baixarDashboardHTML);
+      document.getElementById('shareDashboardBtn').addEventListener('click', compartilharDashboardHTML);
     });
   </script>
 </body>
