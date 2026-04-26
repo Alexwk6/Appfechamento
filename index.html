@@ -477,7 +477,8 @@
       </div>
       <div id="reportContent"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <button class="btn btn-primary" onclick="printReport()">🖨️ Imprimir</button>
+        <!-- Botão Imprimir modificado para abrir popup com fechar -->
+        <button class="btn btn-primary" onclick="openReportPopup()">🖨️ Imprimir</button>
         <button class="btn btn-success" onclick="openDashboard()">📊 Dashboard</button>
       </div>
     </div>
@@ -630,7 +631,6 @@
       if (!state.currentRegister && screenId === 'screenDashboard') navigateToScreen('screenHome');
       else navigateToScreen(screenId);
     }
-    function goBackFromHistory() { goBack(); }
     function setupNavigation() {
       const backBtn = document.getElementById('backButton');
       backBtn.addEventListener('click', handleBackButton);
@@ -943,9 +943,9 @@
 ${h.dailyTotalSales ? `<p>Venda Diária: ${formatCurrency(h.dailyTotalSales)}</p>` : ''}
 ${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
 <h3>Transações</h3>
-<table><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>
-${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}
-</table></body></html>`;
+<table><thead><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead>
+<tbody>${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}
+</tbody></table></body></html>`;
     }
 
     // -------------------- RELATÓRIOS (MENSAL/ANUAL) --------------------
@@ -1028,13 +1028,75 @@ ${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}
         ${monthsHtml}
       `;
     }
-    function printReport() {
-      const content = document.getElementById('reportContent').innerHTML;
+
+    // NOVA FUNÇÃO: Abre popup com conteúdo do relatório e botão fechar
+    function openReportPopup() {
+      const reportContentDiv = document.getElementById('reportContent');
+      if (!reportContentDiv || !reportContentDiv.innerHTML.trim()) {
+        alert('Nenhum conteúdo de relatório para exibir.');
+        return;
+      }
+      const contentHTML = reportContentDiv.innerHTML;
       const title = currentReportType === 'month' ? 'Relatório Mensal' : 'Relatório Anual';
-      const win = window.open('', '_blank');
-      win.document.write(`<html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Arial;padding:20px;} .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;} .summary-item{background:#f5f5f5;padding:14px;text-align:center;} .green{color:#16a34a;} .red{color:#dc2626;}</style></head><body><h1>${title}</h1>${content}</body></html>`);
-      win.document.close();
-      win.print();
+      const popup = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+      if (!popup) {
+        alert('Permita pop-ups para visualizar o relatório.');
+        return;
+      }
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; padding: 20px; }
+            .popup-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; position: relative; }
+            .popup-header { background: #16a34a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+            .popup-header h2 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+            .close-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; line-height: 1; transition: opacity 0.2s; padding: 0 8px; }
+            .close-btn:hover { opacity: 0.7; }
+            .report-body { padding: 24px; }
+            .print-btn { background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 16px; display: inline-block; }
+            .print-btn:hover { background: #15803d; }
+            .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+            .summary-item { background: #f1f5f9; padding: 14px; border-radius: 12px; text-align: center; }
+            .summary-label { font-size: 0.75rem; color: #475569; margin-bottom: 4px; }
+            .summary-value { font-size: 1.1rem; font-weight: 600; }
+            .green { color: #16a34a; }
+            .red { color: #dc2626; }
+            .history-item { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+            .history-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+            .history-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+            .history-badge.ok { background: #dcfce7; color: #16a34a; }
+            .history-badge.diff { background: #fee2e2; color: #dc2626; }
+            @media print {
+              .popup-header, .print-btn { display: none; }
+              body { background: white; padding: 0; }
+              .popup-container { box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="popup-container">
+            <div class="popup-header">
+              <h2>${title}</h2>
+              <button class="close-btn" onclick="window.close()">✕</button>
+            </div>
+            <div class="report-body">
+              <button class="print-btn" onclick="window.print()">🖨️ Imprimir Relatório</button>
+              <div id="popupReportContent">${contentHTML}</div>
+            </div>
+          </div>
+          <script>
+            // Garantir que o conteúdo seja renderizado corretamente
+            document.getElementById('popupReportContent').innerHTML = \`${contentHTML.replace(/`/g, '\\`')}\`;
+          <\/script>
+        </body>
+        </html>
+      `);
+      popup.document.close();
     }
 
     // -------------------- DASHBOARD MODAL + COMPARTILHAMENTO --------------------
