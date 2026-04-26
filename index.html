@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Fechamento de Caixa</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Chart.js para gráficos do dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -394,7 +396,6 @@
       padding: 16px;
       margin-bottom: 12px;
       border: 1px solid var(--border);
-      cursor: pointer;
       transition: all 0.2s;
     }
     
@@ -441,6 +442,25 @@
       align-items: center;
       gap: 4px;
     }
+    
+    .history-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      justify-content: flex-end;
+    }
+    
+    .history-actions button {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      background: var(--border);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    
+    .history-actions button.edit-btn { background: var(--info); color: white; }
+    .history-actions button.delete-btn { background: var(--danger); color: white; }
     
     /* Bottom Navigation */
     .bottom-nav {
@@ -692,9 +712,12 @@
   <!-- Tela Histórico -->
   <div id="screenHistory" class="screen">
     <div class="container">
+      <button class="btn btn-sm btn-outline" style="margin-bottom: 16px;" onclick="goBackFromHistory()">
+        ← Voltar
+      </button>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h2>Histórico</h2>
-        <button class="btn btn-sm btn-outline" onclick="openModal('modalMonthlyReport')">📊 Relatório Mensal</button>
+        <button class="btn btn-sm btn-outline" onclick="openModal('modalMonthlyReport')">📊 Relatório Mensal/Anual</button>
       </div>
       <div id="historyList">
         <div class="empty-state">
@@ -801,6 +824,10 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Venda Total Diária *</label>
+          <input type="number" class="form-input" id="dailyTotalSales" step="0.01" min="0" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
           <label class="form-label">Valor Contado *</label>
           <input type="number" class="form-input" id="countedBalance" step="0.01" min="0" placeholder="0,00" required oninput="calculateChange()">
         </div>
@@ -824,19 +851,63 @@
     </div>
   </div>
 
-  <!-- Modal Relatório Mensal -->
+  <!-- Modal Relatório Mensal/Anual -->
   <div id="modalMonthlyReport" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">Relatório Mensal</h3>
+        <h3 class="modal-title">Relatório</h3>
         <button class="modal-close" onclick="closeModal('modalMonthlyReport')">×</button>
       </div>
       <div class="form-group">
-        <label class="form-label">Mês/Ano</label>
-        <input type="month" class="form-input" id="reportMonth" onchange="generateMonthlyReport()">
+        <label class="form-label">Tipo de Relatório</label>
+        <div class="btn-group" style="margin-bottom: 16px;">
+          <button type="button" class="btn btn-sm btn-outline" id="reportTypeMonthly" onclick="setReportType('month')">Mensal</button>
+          <button type="button" class="btn btn-sm btn-outline" id="reportTypeYearly" onclick="setReportType('year')">Anual</button>
+        </div>
+        <div id="monthSelector">
+          <label class="form-label">Mês/Ano</label>
+          <input type="month" class="form-input" id="reportMonth" onchange="generateReport()">
+        </div>
+        <div id="yearSelector" style="display: none;">
+          <label class="form-label">Ano</label>
+          <select class="form-select" id="reportYear" onchange="generateReport()"></select>
+        </div>
       </div>
-      <div id="monthlyReportContent"></div>
-      <button class="btn btn-primary" onclick="printMonthlyReport()" style="margin-top: 16px;">🖨️ Imprimir Relatório</button>
+      <div id="reportContent"></div>
+      <div class="btn-group" style="margin-top: 16px;">
+        <button class="btn btn-primary" onclick="printReport()">🖨️ Imprimir</button>
+        <button class="btn btn-success" onclick="openDashboard()">📊 Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Histórico -->
+  <div id="modalEditHistory" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar Fechamento</h3>
+        <button class="modal-close" onclick="closeModal('modalEditHistory')">×</button>
+      </div>
+      <form id="formEditHistory">
+        <input type="hidden" id="editHistoryIndex">
+        <div class="form-group">
+          <label class="form-label">Venda Total Diária</label>
+          <input type="number" class="form-input" id="editDailyTotalSales" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Contado</label>
+          <input type="number" class="form-input" id="editCountedBalance" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Retirada</label>
+          <input type="number" class="form-input" id="editWithdrawal" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea class="form-input" id="editObservations" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+      </form>
     </div>
   </div>
 
@@ -861,12 +932,15 @@
       selectedFile: null
     };
 
+    let currentReportType = 'month'; // 'month' or 'year'
+
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
       loadFromStorage();
       updateCurrentDate();
       checkOpenRegister();
       setupForms();
+      populateYearSelect();
     });
 
     // Carregar dados do localStorage
@@ -930,6 +1004,17 @@
       showScreen(screenId);
     }
 
+    // Voltar do histórico
+    function goBackFromHistory() {
+      if (state.currentRegister) {
+        showScreen('screenDashboard');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelector('.nav-item[data-screen="screenDashboard"]').classList.add('active');
+      } else {
+        showScreen('screenHome');
+      }
+    }
+
     // Configurar formulários
     function setupForms() {
       // Abertura de Caixa
@@ -950,6 +1035,12 @@
         closeRegister();
       });
 
+      // Editar Histórico
+      document.getElementById('formEditHistory').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveEditHistory();
+      });
+
       // Preview de arquivo
       document.getElementById('transactionFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -960,9 +1051,284 @@
         }
       });
 
-      // Relatório mensal
+      // Relatório
       const now = new Date();
       document.getElementById('reportMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // Popular select de anos
+    function populateYearSelect() {
+      const years = [];
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+        years.push(y);
+      }
+      const select = document.getElementById('reportYear');
+      select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      select.value = currentYear;
+    }
+
+    // Tipo de relatório
+    function setReportType(type) {
+      currentReportType = type;
+      const monthDiv = document.getElementById('monthSelector');
+      const yearDiv = document.getElementById('yearSelector');
+      if (type === 'month') {
+        monthDiv.style.display = 'block';
+        yearDiv.style.display = 'none';
+        document.getElementById('reportTypeMonthly').classList.add('active');
+        document.getElementById('reportTypeYearly').classList.remove('active');
+      } else {
+        monthDiv.style.display = 'none';
+        yearDiv.style.display = 'block';
+        document.getElementById('reportTypeMonthly').classList.remove('active');
+        document.getElementById('reportTypeYearly').classList.add('active');
+      }
+      generateReport();
+    }
+
+    // Gerar relatório (mensal ou anual)
+    function generateReport() {
+      if (currentReportType === 'month') {
+        generateMonthlyReport();
+      } else {
+        generateYearlyReport();
+      }
+    }
+
+    // Relatório mensal (mantido mas melhorado)
+    function generateMonthlyReport() {
+      const monthValue = document.getElementById('reportMonth').value;
+      if (!monthValue) return;
+      const [year, month] = monthValue.split('-').map(Number);
+      const monthlyData = state.history.filter(h => {
+        const d = new Date(h.closedAt);
+        return d.getFullYear() === year && d.getMonth() + 1 === month;
+      });
+
+      if (monthlyData.length === 0) {
+        document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento encontrado neste período</p></div>`;
+        return;
+      }
+
+      const totalIncome = monthlyData.reduce((sum, h) => sum + h.totalIncome, 0);
+      const totalExpenses = monthlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
+      const totalDifference = monthlyData.reduce((sum, h) => sum + h.difference, 0);
+      const totalDailySales = monthlyData.reduce((sum, h) => sum + (h.dailyTotalSales || 0), 0);
+
+      document.getElementById('reportContent').innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${monthlyData.length}</div></div>
+          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
+          <div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total do Mês</div><div class="summary-value green">${formatCurrency(totalDailySales)}</div></div>
+        </div>
+        <div style="margin-top: 16px;">${monthlyData.map(h => `
+          <div class="history-item" style="cursor: default;">
+            <div class="history-header"><span class="history-date">${formatDate(h.closedAt)}</span><span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">${Math.abs(h.difference) < 0.01 ? '✓' : formatCurrency(h.difference)}</span></div>
+            <div class="history-stats"><span>📈 ${formatCurrency(h.totalIncome)}</span><span>📉 ${formatCurrency(h.totalExpenses)}</span></div>
+          </div>
+        `).join('')}</div>
+      `;
+    }
+
+    // Relatório anual
+    function generateYearlyReport() {
+      const year = parseInt(document.getElementById('reportYear').value);
+      const yearlyData = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
+      
+      if (yearlyData.length === 0) {
+        document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento encontrado neste ano</p></div>`;
+        return;
+      }
+
+      const totalIncome = yearlyData.reduce((sum, h) => sum + h.totalIncome, 0);
+      const totalExpenses = yearlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
+      const totalDifference = yearlyData.reduce((sum, h) => sum + h.difference, 0);
+      const totalDailySales = yearlyData.reduce((sum, h) => sum + (h.dailyTotalSales || 0), 0);
+
+      // Agrupar por mês
+      const months = {};
+      for (let i = 1; i <= 12; i++) months[i] = { income: 0, expenses: 0, sales: 0, count: 0 };
+      yearlyData.forEach(h => {
+        const m = new Date(h.closedAt).getMonth() + 1;
+        months[m].income += h.totalIncome;
+        months[m].expenses += h.totalExpenses;
+        months[m].sales += (h.dailyTotalSales || 0);
+        months[m].count++;
+      });
+
+      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      let monthsHtml = '<div style="margin-top: 16px;"><h4>Detalhamento Mensal</h4>';
+      for (let m = 1; m <= 12; m++) {
+        if (months[m].count > 0) {
+          monthsHtml += `
+            <div class="history-item" style="cursor: default; margin-bottom: 8px;">
+              <div class="history-header"><span class="history-date">${monthNames[m-1]}</span><span class="history-badge ok">${months[m].count} fechamento(s)</span></div>
+              <div class="history-stats"><span>📈 ${formatCurrency(months[m].income)}</span><span>📉 ${formatCurrency(months[m].expenses)}</span><span>🛒 ${formatCurrency(months[m].sales)}</span></div>
+            </div>
+          `;
+        }
+      }
+      monthsHtml += '</div>';
+
+      document.getElementById('reportContent').innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${yearlyData.length}</div></div>
+          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
+          <div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total do Ano</div><div class="summary-value green">${formatCurrency(totalDailySales)}</div></div>
+        </div>
+        ${monthsHtml}
+      `;
+    }
+
+    // Imprimir relatório atual
+    function printReport() {
+      const content = document.getElementById('reportContent').innerHTML;
+      const title = currentReportType === 'month' ? 'Relatório Mensal' : 'Relatório Anual';
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><meta charset="UTF-8"><title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+          .summary-item { background: #f5f5f5; padding: 14px; border-radius: 10px; text-align: center; }
+          .green { color: #16a34a; } .red { color: #dc2626; }
+          .history-item { border: 1px solid #ddd; padding: 12px; margin-bottom: 8px; border-radius: 8px; }
+        </style>
+        </head><body><h1>${title}</h1>${content}</body></html>
+      `);
+      win.document.close();
+      win.print();
+    }
+
+    // Abrir Dashboard em nova aba
+    function openDashboard() {
+      let data;
+      let title;
+      if (currentReportType === 'month') {
+        const monthValue = document.getElementById('reportMonth').value;
+        if (!monthValue) return;
+        const [year, month] = monthValue.split('-').map(Number);
+        data = state.history.filter(h => {
+          const d = new Date(h.closedAt);
+          return d.getFullYear() === year && d.getMonth() + 1 === month;
+        });
+        title = `Dashboard - ${formatMonthYear(monthValue)}`;
+      } else {
+        const year = parseInt(document.getElementById('reportYear').value);
+        data = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
+        title = `Dashboard - ${year}`;
+      }
+
+      if (data.length === 0) {
+        alert('Não há dados para o período selecionado.');
+        return;
+      }
+
+      // Gerar HTML do dashboard
+      const dashboardHtml = generateDashboardHtml(data, title);
+      const newWin = window.open();
+      newWin.document.write(dashboardHtml);
+      newWin.document.close();
+    }
+
+    function generateDashboardHtml(data, title) {
+      // Totais
+      const totalIncome = data.reduce((s, h) => s + h.totalIncome, 0);
+      const totalExpenses = data.reduce((s, h) => s + h.totalExpenses, 0);
+      const totalDiff = data.reduce((s, h) => s + h.difference, 0);
+      const totalSales = data.reduce((s, h) => s + (h.dailyTotalSales || 0), 0);
+      
+      // Dados para gráfico: por dia (ordem crescente)
+      const sorted = [...data].sort((a,b) => new Date(a.closedAt) - new Date(b.closedAt));
+      const labels = sorted.map(h => formatDate(h.closedAt));
+      const incomeData = sorted.map(h => h.totalIncome);
+      const expensesData = sorted.map(h => h.totalExpenses);
+      const salesData = sorted.map(h => h.dailyTotalSales || 0);
+
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { margin-bottom: 20px; text-align: center; color: #16a34a; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+    .card { background: white; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
+    .card .value { font-size: 1.8rem; font-weight: bold; }
+    .green { color: #22c55e; }
+    .red { color: #ef4444; }
+    .chart-container { background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    canvas { max-height: 400px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; }
+    .text-right { text-align: right; }
+    @media (max-width: 640px) { th, td { padding: 8px; font-size: 0.8rem; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>${title}</h1>
+  <div class="cards">
+    <div class="card"><h3>Fechamentos</h3><div class="value">${data.length}</div></div>
+    <div class="card"><h3>Total Entradas</h3><div class="value green">${formatCurrency(totalIncome)}</div></div>
+    <div class="card"><h3>Total Saídas</h3><div class="value red">${formatCurrency(totalExpenses)}</div></div>
+    <div class="card"><h3>Diferença Total</h3><div class="value ${totalDiff >= 0 ? 'green' : 'red'}">${formatCurrency(totalDiff)}</div></div>
+    <div class="card"><h3>Venda Total</h3><div class="value green">${formatCurrency(totalSales)}</div></div>
+  </div>
+  <div class="chart-container">
+    <canvas id="dailyChart"></canvas>
+  </div>
+  <table>
+    <thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead>
+    <tbody>
+      ${sorted.map(h => `
+        <tr>
+          <td>${formatDate(h.closedAt)}</td>
+          <td>${h.operatorName}</td>
+          <td class="green text-right">${formatCurrency(h.totalIncome)}</td>
+          <td class="red text-right">${formatCurrency(h.totalExpenses)}</td>
+          <td class="text-right">${formatCurrency(h.closingBalance)}</td>
+          <td class="${h.difference >= 0 ? 'green' : 'red'} text-right">${formatCurrency(h.difference)}</td>
+          <td class="green text-right">${formatCurrency(h.dailyTotalSales || 0)}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</div>
+<script>
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ${JSON.stringify(labels)},
+      datasets: [
+        { label: 'Entradas', data: ${JSON.stringify(incomeData)}, backgroundColor: '#22c55e', borderRadius: 6 },
+        { label: 'Saídas', data: ${JSON.stringify(expensesData)}, backgroundColor: '#ef4444', borderRadius: 6 },
+        { label: 'Venda Diária', data: ${JSON.stringify(salesData)}, backgroundColor: '#f59e0b', borderRadius: 6 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+  });
+<\/script>
+</body>
+</html>`;
+    }
+
+    function formatMonthYear(monthValue) {
+      const [year, month] = monthValue.split('-');
+      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      return `${months[parseInt(month)-1]} ${year}`;
     }
 
     // Abrir caixa
@@ -982,7 +1348,6 @@
       saveToStorage();
       checkOpenRegister();
       
-      // Limpar formulário
       document.getElementById('formOpenRegister').reset();
     }
 
@@ -995,7 +1360,6 @@
       const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
       const expected = opening + income - expenses;
 
-      // Calcular transações em dinheiro
       const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
       const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
       const cashTotal = opening + cashIncome - cashExpenses;
@@ -1014,40 +1378,29 @@
       const list = document.getElementById('transactionList');
       
       if (state.transactions.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">📝</div>
-            <p>Nenhum lançamento ainda</p>
-          </div>
-        `;
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><p>Nenhum lançamento ainda</p></div>`;
         return;
       }
 
       list.innerHTML = state.transactions.map((t, index) => `
         <div class="transaction-item">
-          <div class="transaction-icon ${t.type}">
-            ${t.type === 'income' ? '↑' : '↓'}
-          </div>
+          <div class="transaction-icon ${t.type}">${t.type === 'income' ? '↑' : '↓'}</div>
           <div class="transaction-info">
             <div class="transaction-desc">${t.description || (t.type === 'income' ? 'Entrada' : 'Saída')}</div>
             <div class="transaction-category">${t.category}${t.fileName ? ' 📎' : ''}</div>
           </div>
-          <div class="transaction-amount ${t.type}">
-            ${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}
-          </div>
+          <div class="transaction-amount ${t.type}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
           <button class="transaction-delete" onclick="deleteTransaction(${index})">🗑️</button>
         </div>
       `).join('');
     }
 
-    // Tipo de transação
     function setTransactionType(type, btn) {
       document.getElementById('transactionType').value = type;
       document.querySelectorAll('#formAddTransaction .tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
     }
 
-    // Adicionar transação
     function addTransaction() {
       const type = document.getElementById('transactionType').value;
       const amount = parseFloat(document.getElementById('transactionAmount').value);
@@ -1074,7 +1427,6 @@
       updateDashboard();
       closeModal('modalAddTransaction');
 
-      // Limpar formulário
       document.getElementById('formAddTransaction').reset();
       document.getElementById('transactionType').value = 'income';
       document.querySelectorAll('#formAddTransaction .tab').forEach(t => t.classList.remove('active'));
@@ -1082,7 +1434,6 @@
       removeFile();
     }
 
-    // Remover transação
     function deleteTransaction(index) {
       if (confirm('Tem certeza que deseja excluir este lançamento?')) {
         state.transactions.splice(index, 1);
@@ -1091,39 +1442,28 @@
       }
     }
 
-    // Remover arquivo
     function removeFile() {
       state.selectedFile = null;
       document.getElementById('transactionFile').value = '';
       document.getElementById('filePreview').style.display = 'none';
     }
 
-    // Abrir modal
     function openModal(modalId) {
       document.getElementById(modalId).classList.add('active');
-      
-      if (modalId === 'modalCloseRegister') {
-        updateCloseModal();
-      }
-      
-      if (modalId === 'modalMonthlyReport') {
-        generateMonthlyReport();
-      }
+      if (modalId === 'modalCloseRegister') updateCloseModal();
+      if (modalId === 'modalMonthlyReport') generateReport();
     }
 
-    // Fechar modal
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
     }
 
-    // Atualizar modal de fechamento
     function updateCloseModal() {
       const opening = state.currentRegister.openingBalance;
       const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
       const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
       const expected = opening + income - expenses;
 
-      // Transações em dinheiro
       const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
       const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
       const cashTotal = opening + cashIncome - cashExpenses;
@@ -1135,15 +1475,12 @@
       document.getElementById('closeCashTotal').textContent = formatCurrency(cashTotal);
     }
 
-    // Calcular troco
     function calculateChange() {
       const counted = parseFloat(document.getElementById('countedBalance').value) || 0;
       const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0;
       const change = counted - withdrawal;
-
       document.getElementById('changeInRegister').textContent = formatCurrency(change);
 
-      // Calcular diferença
       const opening = state.currentRegister.openingBalance;
       const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
       const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -1152,29 +1489,23 @@
 
       const alertDiv = document.getElementById('differenceAlert');
       if (counted > 0) {
-        if (Math.abs(difference) < 0.01) {
-          alertDiv.innerHTML = `<div class="alert alert-success">✓ Caixa confere!</div>`;
-        } else if (difference > 0) {
-          alertDiv.innerHTML = `<div class="alert alert-warning">↑ Sobra de ${formatCurrency(difference)}</div>`;
-        } else {
-          alertDiv.innerHTML = `<div class="alert alert-danger">↓ Falta de ${formatCurrency(Math.abs(difference))}</div>`;
-        }
+        if (Math.abs(difference) < 0.01) alertDiv.innerHTML = `<div class="alert alert-success">✓ Caixa confere!</div>`;
+        else if (difference > 0) alertDiv.innerHTML = `<div class="alert alert-warning">↑ Sobra de ${formatCurrency(difference)}</div>`;
+        else alertDiv.innerHTML = `<div class="alert alert-danger">↓ Falta de ${formatCurrency(Math.abs(difference))}</div>`;
         alertDiv.style.display = 'block';
       } else {
         alertDiv.style.display = 'none';
       }
     }
 
-    // Fechar caixa
     function closeRegister() {
+      const dailyTotalSales = parseFloat(document.getElementById('dailyTotalSales').value);
       const counted = parseFloat(document.getElementById('countedBalance').value);
       const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0;
       const observations = document.getElementById('closeObservations').value;
 
-      if (!counted && counted !== 0) {
-        alert('Informe o valor contado');
-        return;
-      }
+      if (!dailyTotalSales && dailyTotalSales !== 0) { alert('Informe a venda total diária'); return; }
+      if (!counted && counted !== 0) { alert('Informe o valor contado'); return; }
 
       const opening = state.currentRegister.openingBalance;
       const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -1183,7 +1514,6 @@
       const difference = counted - expected;
       const change = counted - withdrawal;
 
-      // Salvar no histórico
       const closedRegister = {
         ...state.currentRegister,
         closedAt: new Date().toISOString(),
@@ -1193,6 +1523,7 @@
         difference,
         withdrawal,
         changeInRegister: change,
+        dailyTotalSales,
         observations,
         transactions: [...state.transactions],
         totalIncome: income,
@@ -1205,8 +1536,6 @@
       
       saveToStorage();
       closeModal('modalCloseRegister');
-      
-      // Limpar formulário
       document.getElementById('formCloseRegister').reset();
       document.getElementById('differenceAlert').style.display = 'none';
       
@@ -1214,117 +1543,118 @@
       alert('Caixa fechado com sucesso!');
     }
 
-    // Renderizar histórico
+    // Renderizar histórico com botões editar/excluir
     function renderHistory() {
       const list = document.getElementById('historyList');
-      
       if (state.history.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <p>Nenhum fechamento registrado</p>
-          </div>
-        `;
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum fechamento registrado</p></div>`;
         return;
       }
 
-      list.innerHTML = state.history.map((h, index) => `
-        <div class="history-item" onclick="showDetail(${index})">
+      list.innerHTML = state.history.map((h, idx) => `
+        <div class="history-item">
           <div class="history-header">
             <span class="history-date">${formatDate(h.closedAt)}</span>
-            <span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">
-              ${Math.abs(h.difference) < 0.01 ? '✓ Confere' : formatCurrency(h.difference)}
-            </span>
+            <span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">${Math.abs(h.difference) < 0.01 ? '✓ Confere' : formatCurrency(h.difference)}</span>
           </div>
           <div class="history-stats">
             <span class="history-stat">💰 ${formatCurrency(h.closingBalance)}</span>
             <span class="history-stat">📈 ${formatCurrency(h.totalIncome)}</span>
             <span class="history-stat">📉 ${formatCurrency(h.totalExpenses)}</span>
+            ${h.dailyTotalSales ? `<span class="history-stat">🛒 ${formatCurrency(h.dailyTotalSales)}</span>` : ''}
+          </div>
+          <div class="history-actions">
+            <button class="edit-btn" onclick="editHistoryItem(${idx})">✏️ Editar</button>
+            <button class="delete-btn" onclick="deleteHistoryItem(${idx})">🗑️ Excluir</button>
           </div>
         </div>
       `).join('');
     }
 
-    // Mostrar detalhes
+    function editHistoryItem(index) {
+      const h = state.history[index];
+      document.getElementById('editHistoryIndex').value = index;
+      document.getElementById('editDailyTotalSales').value = h.dailyTotalSales || 0;
+      document.getElementById('editCountedBalance').value = h.countedBalance;
+      document.getElementById('editWithdrawal').value = h.withdrawal || 0;
+      document.getElementById('editObservations').value = h.observations || '';
+      openModal('modalEditHistory');
+    }
+
+    function saveEditHistory() {
+      const index = parseInt(document.getElementById('editHistoryIndex').value);
+      if (isNaN(index)) return;
+      const h = state.history[index];
+      if (!h) return;
+
+      const newDailySales = parseFloat(document.getElementById('editDailyTotalSales').value) || 0;
+      const newCounted = parseFloat(document.getElementById('editCountedBalance').value) || 0;
+      const newWithdrawal = parseFloat(document.getElementById('editWithdrawal').value) || 0;
+      const newObservations = document.getElementById('editObservations').value;
+
+      // Recalcular diferença com base no novo valor contado
+      const newDifference = newCounted - h.closingBalance;
+      
+      h.dailyTotalSales = newDailySales;
+      h.countedBalance = newCounted;
+      h.withdrawal = newWithdrawal;
+      h.observations = newObservations;
+      h.difference = newDifference;
+      h.changeInRegister = newCounted - newWithdrawal;
+
+      saveToStorage();
+      closeModal('modalEditHistory');
+      renderHistory();
+      alert('Fechamento atualizado com sucesso!');
+    }
+
+    function deleteHistoryItem(index) {
+      if (confirm('Tem certeza que deseja excluir este fechamento permanentemente?')) {
+        state.history.splice(index, 1);
+        saveToStorage();
+        renderHistory();
+      }
+    }
+
+    // Mostrar detalhes (mantido)
     function showDetail(index) {
       const h = state.history[index];
-      
       document.getElementById('detailContent').innerHTML = `
         <div class="card">
           <h2 style="margin-bottom: 16px;">Fechamento - ${formatDate(h.closedAt)}</h2>
           <div class="summary-grid">
-            <div class="summary-item">
-              <div class="summary-label">Operador</div>
-              <div class="summary-value">${h.operatorName}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Abertura</div>
-              <div class="summary-value">${formatTime(h.openedAt)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Saldo Inicial</div>
-              <div class="summary-value">${formatCurrency(h.openingBalance)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Saldo Final</div>
-              <div class="summary-value">${formatCurrency(h.closingBalance)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Entradas</div>
-              <div class="summary-value green">${formatCurrency(h.totalIncome)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Saídas</div>
-              <div class="summary-value red">${formatCurrency(h.totalExpenses)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Valor Contado</div>
-              <div class="summary-value">${formatCurrency(h.countedBalance)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Diferença</div>
-              <div class="summary-value ${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Retirada</div>
-              <div class="summary-value">${formatCurrency(h.withdrawal || 0)}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Troco no Caixa</div>
-              <div class="summary-value">${formatCurrency(h.changeInRegister || 0)}</div>
-            </div>
+            <div class="summary-item"><div class="summary-label">Operador</div><div class="summary-value">${h.operatorName}</div></div>
+            <div class="summary-item"><div class="summary-label">Abertura</div><div class="summary-value">${formatTime(h.openedAt)}</div></div>
+            <div class="summary-item"><div class="summary-label">Saldo Inicial</div><div class="summary-value">${formatCurrency(h.openingBalance)}</div></div>
+            <div class="summary-item"><div class="summary-label">Saldo Final</div><div class="summary-value">${formatCurrency(h.closingBalance)}</div></div>
+            <div class="summary-item"><div class="summary-label">Entradas</div><div class="summary-value green">${formatCurrency(h.totalIncome)}</div></div>
+            <div class="summary-item"><div class="summary-label">Saídas</div><div class="summary-value red">${formatCurrency(h.totalExpenses)}</div></div>
+            <div class="summary-item"><div class="summary-label">Valor Contado</div><div class="summary-value">${formatCurrency(h.countedBalance)}</div></div>
+            <div class="summary-item"><div class="summary-label">Diferença</div><div class="summary-value ${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</div></div>
+            <div class="summary-item"><div class="summary-label">Retirada</div><div class="summary-value">${formatCurrency(h.withdrawal || 0)}</div></div>
+            <div class="summary-item"><div class="summary-label">Troco no Caixa</div><div class="summary-value">${formatCurrency(h.changeInRegister || 0)}</div></div>
+            ${h.dailyTotalSales ? `<div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total Diária</div><div class="summary-value green">${formatCurrency(h.dailyTotalSales)}</div></div>` : ''}
           </div>
           ${h.observations ? `<p style="margin-top: 12px; color: var(--text-muted);"><strong>Obs:</strong> ${h.observations}</p>` : ''}
         </div>
-        
         <h3 style="margin: 16px 0 12px;">Transações (${h.transactions.length})</h3>
         <div class="transaction-list">
           ${h.transactions.map(t => `
             <div class="transaction-item">
-              <div class="transaction-icon ${t.type}">
-                ${t.type === 'income' ? '↑' : '↓'}
-              </div>
-              <div class="transaction-info">
-                <div class="transaction-desc">${t.description || (t.type === 'income' ? 'Entrada' : 'Saída')}</div>
-                <div class="transaction-category">${t.category}</div>
-              </div>
-              <div class="transaction-amount ${t.type}">
-                ${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}
-              </div>
+              <div class="transaction-icon ${t.type}">${t.type === 'income' ? '↑' : '↓'}</div>
+              <div class="transaction-info"><div class="transaction-desc">${t.description || (t.type === 'income' ? 'Entrada' : 'Saída')}</div><div class="transaction-category">${t.category}</div></div>
+              <div class="transaction-amount ${t.type}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
             </div>
           `).join('')}
         </div>
-        
         <div class="btn-group" style="margin-top: 16px;">
           <button class="btn btn-outline" onclick="printDetail(${index})">🖨️ Imprimir</button>
           <button class="btn btn-primary" onclick="shareDetail(${index})">📤 Compartilhar</button>
         </div>
       `;
-      
       showScreen('screenDetail');
     }
 
-    // Imprimir detalhes
     function printDetail(index) {
       const h = state.history[index];
       const content = generatePrintContent(h);
@@ -1334,259 +1664,38 @@
       win.print();
     }
 
-    // Compartilhar detalhes
     function shareDetail(index) {
       const h = state.history[index];
-      const text = `📊 FECHAMENTO DE CAIXA
-📅 ${formatDate(h.closedAt)}
-👤 ${h.operatorName}
-
-💰 Saldo Inicial: ${formatCurrency(h.openingBalance)}
-📈 Entradas: ${formatCurrency(h.totalIncome)}
-📉 Saídas: ${formatCurrency(h.totalExpenses)}
-💵 Saldo Final: ${formatCurrency(h.closingBalance)}
-🔢 Valor Contado: ${formatCurrency(h.countedBalance)}
-${h.difference !== 0 ? `⚠️ Diferença: ${formatCurrency(h.difference)}` : '✅ Caixa confere!'}
-💸 Retirada: ${formatCurrency(h.withdrawal || 0)}
-🪙 Troco no Caixa: ${formatCurrency(h.changeInRegister || 0)}`;
-
-      if (navigator.share) {
-        navigator.share({ text });
-      } else {
-        navigator.clipboard.writeText(text);
-        alert('Texto copiado para a área de transferência!');
-      }
+      const text = `📊 FECHAMENTO DE CAIXA\n📅 ${formatDate(h.closedAt)}\n👤 ${h.operatorName}\n💰 Saldo Inicial: ${formatCurrency(h.openingBalance)}\n📈 Entradas: ${formatCurrency(h.totalIncome)}\n📉 Saídas: ${formatCurrency(h.totalExpenses)}\n💵 Saldo Final: ${formatCurrency(h.closingBalance)}\n🔢 Valor Contado: ${formatCurrency(h.countedBalance)}\n${h.difference !== 0 ? `⚠️ Diferença: ${formatCurrency(h.difference)}` : '✅ Caixa confere!'}\n💸 Retirada: ${formatCurrency(h.withdrawal || 0)}\n🪙 Troco no Caixa: ${formatCurrency(h.changeInRegister || 0)}\n${h.dailyTotalSales ? `🛒 Venda Total Diária: ${formatCurrency(h.dailyTotalSales)}` : ''}`;
+      if (navigator.share) navigator.share({ text });
+      else { navigator.clipboard.writeText(text); alert('Texto copiado!'); }
     }
 
-    // Gerar conteúdo para impressão
     function generatePrintContent(h) {
       return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Fechamento de Caixa - ${formatDate(h.closedAt)}</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-    h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
-    .info { display: flex; justify-content: space-between; margin: 8px 0; }
-    .section { margin: 20px 0; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f0f0f0; }
-    .total { font-weight: bold; font-size: 1.1em; }
-    .green { color: #16a34a; }
-    .red { color: #dc2626; }
-    @media print { body { padding: 0; } }
-  </style>
-</head>
-<body>
-  <h1>Fechamento de Caixa</h1>
-  <div class="section">
-    <div class="info"><span>Data:</span><span>${formatDate(h.closedAt)}</span></div>
-    <div class="info"><span>Operador:</span><span>${h.operatorName}</span></div>
-    <div class="info"><span>Abertura:</span><span>${formatTime(h.openedAt)}</span></div>
-    <div class="info"><span>Fechamento:</span><span>${formatTime(h.closedAt)}</span></div>
-  </div>
-  <div class="section">
-    <h3>Resumo Financeiro</h3>
-    <div class="info"><span>Saldo Inicial:</span><span>${formatCurrency(h.openingBalance)}</span></div>
-    <div class="info"><span>Total Entradas:</span><span class="green">${formatCurrency(h.totalIncome)}</span></div>
-    <div class="info"><span>Total Saídas:</span><span class="red">${formatCurrency(h.totalExpenses)}</span></div>
-    <div class="info total"><span>Saldo Esperado:</span><span>${formatCurrency(h.closingBalance)}</span></div>
-    <div class="info"><span>Valor Contado:</span><span>${formatCurrency(h.countedBalance)}</span></div>
-    <div class="info"><span>Diferença:</span><span class="${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</span></div>
-    <div class="info"><span>Retirada:</span><span>${formatCurrency(h.withdrawal || 0)}</span></div>
-    <div class="info"><span>Troco no Caixa:</span><span>${formatCurrency(h.changeInRegister || 0)}</span></div>
-  </div>
-  <div class="section">
-    <h3>Transações</h3>
-    <table>
-      <tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>
-      ${h.transactions.map(t => `
-        <tr>
-          <td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td>
-          <td>${t.category}</td>
-          <td>${t.description || '-'}</td>
-          <td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td>
-        </tr>
-      `).join('')}
-    </table>
-  </div>
-  ${h.observations ? `<div class="section"><strong>Observações:</strong> ${h.observations}</div>` : ''}
-</body>
-</html>`;
-    }
-
-    // Relatório mensal
-    function generateMonthlyReport() {
-      const monthValue = document.getElementById('reportMonth').value;
-      if (!monthValue) return;
-
-      const [year, month] = monthValue.split('-').map(Number);
-      const monthlyData = state.history.filter(h => {
-        const d = new Date(h.closedAt);
-        return d.getFullYear() === year && d.getMonth() + 1 === month;
-      });
-
-      if (monthlyData.length === 0) {
-        document.getElementById('monthlyReportContent').innerHTML = `
-          <div class="empty-state">
-            <p>Nenhum fechamento encontrado neste período</p>
-          </div>
-        `;
-        return;
-      }
-
-      const totalIncome = monthlyData.reduce((sum, h) => sum + h.totalIncome, 0);
-      const totalExpenses = monthlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
-      const totalDifference = monthlyData.reduce((sum, h) => sum + h.difference, 0);
-
-      document.getElementById('monthlyReportContent').innerHTML = `
-        <div class="summary-grid">
-          <div class="summary-item">
-            <div class="summary-label">Fechamentos</div>
-            <div class="summary-value">${monthlyData.length}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Diferença Total</div>
-            <div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Total Entradas</div>
-            <div class="summary-value green">${formatCurrency(totalIncome)}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Total Saídas</div>
-            <div class="summary-value red">${formatCurrency(totalExpenses)}</div>
-          </div>
-        </div>
-        <div style="margin-top: 16px;">
-          ${monthlyData.map(h => `
-            <div class="history-item" style="cursor: default;">
-              <div class="history-header">
-                <span class="history-date">${formatDate(h.closedAt)}</span>
-                <span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">
-                  ${Math.abs(h.difference) < 0.01 ? '✓' : formatCurrency(h.difference)}
-                </span>
-              </div>
-              <div class="history-stats">
-                <span>📈 ${formatCurrency(h.totalIncome)}</span>
-                <span>📉 ${formatCurrency(h.totalExpenses)}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    // Imprimir relatório mensal
-    function printMonthlyReport() {
-      const monthValue = document.getElementById('reportMonth').value;
-      const [year, month] = monthValue.split('-').map(Number);
-      const monthlyData = state.history.filter(h => {
-        const d = new Date(h.closedAt);
-        return d.getFullYear() === year && d.getMonth() + 1 === month;
-      });
-
-      if (monthlyData.length === 0) {
-        alert('Nenhum dado para imprimir');
-        return;
-      }
-
-      const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-      const totalIncome = monthlyData.reduce((sum, h) => sum + h.totalIncome, 0);
-      const totalExpenses = monthlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
-      const totalDifference = monthlyData.reduce((sum, h) => sum + h.difference, 0);
-
-      const content = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Relatório Mensal - ${monthNames[month-1]} ${year}</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-    h1 { text-align: center; }
-    .summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-    .summary-item { text-align: center; }
-    .summary-label { font-size: 0.9em; color: #666; }
-    .summary-value { font-size: 1.3em; font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background: #f0f0f0; }
-    .green { color: #16a34a; }
-    .red { color: #dc2626; }
-    @media print { body { padding: 0; } }
-  </style>
-</head>
-<body>
-  <h1>Relatório Mensal - ${monthNames[month-1]} ${year}</h1>
-  <div class="summary">
-    <div class="summary-item">
-      <div class="summary-label">Fechamentos</div>
-      <div class="summary-value">${monthlyData.length}</div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-label">Total Entradas</div>
-      <div class="summary-value green">${formatCurrency(totalIncome)}</div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-label">Total Saídas</div>
-      <div class="summary-value red">${formatCurrency(totalExpenses)}</div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-label">Diferença Total</div>
-      <div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div>
-    </div>
-  </div>
-  <table>
-    <tr>
-      <th>Data</th>
-      <th>Operador</th>
-      <th>Entradas</th>
-      <th>Saídas</th>
-      <th>Saldo</th>
-      <th>Diferença</th>
-    </tr>
-    ${monthlyData.map(h => `
-      <tr>
-        <td>${formatDate(h.closedAt)}</td>
-        <td>${h.operatorName}</td>
-        <td class="green">${formatCurrency(h.totalIncome)}</td>
-        <td class="red">${formatCurrency(h.totalExpenses)}</td>
-        <td>${formatCurrency(h.closingBalance)}</td>
-        <td class="${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</td>
-      </tr>
-    `).join('')}
-  </table>
-</body>
-</html>`;
-
-      const win = window.open('', '_blank');
-      win.document.write(content);
-      win.document.close();
-      win.print();
+<html><head><meta charset="UTF-8"><title>Fechamento de Caixa - ${formatDate(h.closedAt)}</title>
+<style>body{font-family:Arial,sans-serif;padding:20px;max-width:600px;margin:0 auto;}h1{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;}.info{display:flex;justify-content:space-between;margin:8px 0;}.section{margin:20px 0;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f0f0f0;}.total{font-weight:bold;}.green{color:#16a34a;}.red{color:#dc2626;}</style></head>
+<body><h1>Fechamento de Caixa</h1>
+<div class="section"><div class="info"><span>Data:</span><span>${formatDate(h.closedAt)}</span></div><div class="info"><span>Operador:</span><span>${h.operatorName}</span></div><div class="info"><span>Abertura:</span><span>${formatTime(h.openedAt)}</span></div><div class="info"><span>Fechamento:</span><span>${formatTime(h.closedAt)}</span></div></div>
+<div class="section"><h3>Resumo Financeiro</h3><div class="info"><span>Saldo Inicial:</span><span>${formatCurrency(h.openingBalance)}</span></div><div class="info"><span>Total Entradas:</span><span class="green">${formatCurrency(h.totalIncome)}</span></div><div class="info"><span>Total Saídas:</span><span class="red">${formatCurrency(h.totalExpenses)}</span></div><div class="info total"><span>Saldo Esperado:</span><span>${formatCurrency(h.closingBalance)}</span></div><div class="info"><span>Valor Contado:</span><span>${formatCurrency(h.countedBalance)}</span></div><div class="info"><span>Diferença:</span><span class="${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</span></div><div class="info"><span>Retirada:</span><span>${formatCurrency(h.withdrawal || 0)}</span></div><div class="info"><span>Troco no Caixa:</span><span>${formatCurrency(h.changeInRegister || 0)}</span></div>${h.dailyTotalSales ? `<div class="info total"><span>Venda Total Diária:</span><span class="green">${formatCurrency(h.dailyTotalSales)}</span></div>` : ''}</div>
+<div class="section"><h3>Transações</h3><table><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}</table></div>${h.observations ? `<div class="section"><strong>Observações:</strong> ${h.observations}</div>` : ''}
+</body></html>`;
     }
 
     // Utilitários
     function formatCurrency(value) {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
     }
-
     function formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('pt-BR');
     }
-
     function formatTime(dateStr) {
       return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
 
     // Fechar modais ao clicar fora
     document.querySelectorAll('.modal-overlay').forEach(modal => {
-      modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-          this.classList.remove('active');
-        }
-      });
+      modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
     });
   </script>
 </body>
