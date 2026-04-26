@@ -8,15 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Fechamento de Caixa</title>
   <link rel="manifest" href="manifest.json">
-  <!-- Chart.js para gráficos do dashboard -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --primary: #16a34a;
       --primary-dark: #15803d;
@@ -30,7 +24,6 @@
       --warning: #f59e0b;
       --info: #3b82f6;
     }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--background);
@@ -38,14 +31,7 @@
       min-height: 100vh;
       padding-bottom: 80px;
     }
-    
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-    
-    /* Header */
+    .container { max-width: 500px; margin: 0 auto; padding: 16px; }
     .header {
       background: var(--primary);
       color: white;
@@ -54,20 +40,30 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
     }
-    
-    .header h1 {
-      font-size: 1.25rem;
-      font-weight: 600;
+    .back-btn {
+      position: absolute;
+      left: 16px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: none;
+      width: 32px;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
     }
-    
-    .header-subtitle {
-      font-size: 0.875rem;
-      opacity: 0.9;
-      margin-top: 4px;
-    }
-    
-    /* Cards */
+    .back-btn.visible { display: flex; }
+    .header h1 { font-size: 1.25rem; font-weight: 600; flex: 1; }
+    .header-subtitle { font-size: 0.875rem; opacity: 0.9; margin-top: 4px; }
     .card {
       background: var(--card);
       border-radius: 12px;
@@ -76,14 +72,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       border: 1px solid var(--border);
     }
-    
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .card-icon {
       width: 40px;
       height: 40px;
@@ -93,26 +82,14 @@
       justify-content: center;
       font-size: 1.25rem;
     }
-    
     .card-icon.green { background: #dcfce7; color: var(--success); }
     .card-icon.red { background: #fee2e2; color: var(--danger); }
     .card-icon.blue { background: #dbeafe; color: var(--info); }
     .card-icon.yellow { background: #fef3c7; color: var(--warning); }
-    
-    .card-title {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-    
-    .card-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-    
+    .card-title { font-size: 0.875rem; color: var(--text-muted); }
+    .card-value { font-size: 1.5rem; font-weight: 700; }
     .card-value.green { color: var(--success); }
     .card-value.red { color: var(--danger); }
-    
-    /* Buttons */
     .btn {
       display: flex;
       align-items: center;
@@ -127,89 +104,26 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: var(--primary-dark);
-    }
-    
-    .btn-secondary {
-      background: var(--border);
-      color: var(--text);
-    }
-    
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-    
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-    
-    .btn-outline {
-      background: transparent;
-      border: 2px solid var(--border);
-      color: var(--text);
-    }
-    
-    .btn-sm {
-      padding: 10px 16px;
-      font-size: 0.875rem;
-    }
-    
-    .btn-group {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .btn-group .btn {
-      flex: 1;
-    }
-    
-    /* Forms */
-    .form-group {
-      margin-bottom: 16px;
-    }
-    
-    .form-label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-    
-    .form-input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-size: 1rem;
-      transition: border-color 0.2s;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    
-    .form-select {
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+    .btn-sm { padding: 10px 16px; font-size: 0.875rem; }
+    .btn-group { display: flex; gap: 8px; }
+    .btn-group .btn { flex: 1; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+    .form-input, .form-select {
       width: 100%;
       padding: 14px 16px;
       border: 2px solid var(--border);
       border-radius: 10px;
       font-size: 1rem;
       background: white;
-      cursor: pointer;
     }
-    
-    /* Tabs */
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); }
     .tabs {
       display: flex;
       background: var(--card);
@@ -218,7 +132,6 @@
       margin-bottom: 16px;
       border: 1px solid var(--border);
     }
-    
     .tab {
       flex: 1;
       padding: 12px;
@@ -229,21 +142,9 @@
       font-weight: 500;
       cursor: pointer;
       color: var(--text-muted);
-      transition: all 0.2s;
     }
-    
-    .tab.active {
-      background: var(--primary);
-      color: white;
-    }
-    
-    /* Transaction List */
-    .transaction-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
+    .tab.active { background: var(--primary); color: white; }
+    .transaction-list { display: flex; flex-direction: column; gap: 8px; }
     .transaction-item {
       display: flex;
       align-items: center;
@@ -252,7 +153,6 @@
       border-radius: 10px;
       border: 1px solid var(--border);
     }
-    
     .transaction-icon {
       width: 36px;
       height: 36px;
@@ -263,48 +163,15 @@
       margin-right: 12px;
       font-size: 1rem;
     }
-    
     .transaction-icon.income { background: #dcfce7; color: var(--success); }
     .transaction-icon.expense { background: #fee2e2; color: var(--danger); }
-    
-    .transaction-info {
-      flex: 1;
-    }
-    
-    .transaction-desc {
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    
-    .transaction-category {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    
-    .transaction-amount {
-      font-weight: 600;
-      font-size: 1rem;
-    }
-    
+    .transaction-info { flex: 1; }
+    .transaction-desc { font-weight: 500; font-size: 0.9rem; }
+    .transaction-category { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .transaction-amount { font-weight: 600; font-size: 1rem; }
     .transaction-amount.income { color: var(--success); }
     .transaction-amount.expense { color: var(--danger); }
-    
-    .transaction-delete {
-      margin-left: 8px;
-      padding: 8px;
-      background: none;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    
-    .transaction-delete:hover {
-      background: #fee2e2;
-    }
-    
-    /* Modal */
+    .transaction-delete { margin-left: 8px; padding: 8px; background: none; border: none; color: var(--danger); cursor: pointer; border-radius: 6px; }
     .modal-overlay {
       display: none;
       position: fixed;
@@ -317,11 +184,7 @@
       align-items: flex-end;
       justify-content: center;
     }
-    
-    .modal-overlay.active {
-      display: flex;
-    }
-    
+    .modal-overlay.active { display: flex; }
     .modal {
       background: var(--card);
       border-radius: 20px 20px 0 0;
@@ -332,137 +195,41 @@
       overflow-y: auto;
       animation: slideUp 0.3s ease;
     }
-    
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-    
-    .modal-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: var(--border);
-      border-radius: 50%;
-      font-size: 1.25rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    /* Summary Card */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    
-    .summary-item {
-      background: var(--background);
-      padding: 14px;
-      border-radius: 10px;
-      text-align: center;
-    }
-    
-    .summary-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    
-    .summary-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-    
-    /* History */
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 1.25rem; font-weight: 600; }
+    .modal-close { width: 32px; height: 32px; border: none; background: var(--border); border-radius: 50%; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    /* Dashboard Modal específico */
+    .dashboard-modal .modal { max-width: 90vw; width: 90%; max-height: 85vh; border-radius: 20px; }
+    .dashboard-container { padding: 10px; }
+    .dashboard-container .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .dashboard-container .card { margin: 0; text-align: center; }
+    .dashboard-container .chart-container { margin: 20px 0; }
+    .dashboard-container canvas { max-height: 300px; width: 100%; }
+    .dashboard-container table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .dashboard-container th, .dashboard-container td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+    .dashboard-container th { background: var(--background); }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .summary-item { background: var(--background); padding: 14px; border-radius: 10px; text-align: center; }
+    .summary-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .summary-value { font-size: 1.1rem; font-weight: 600; }
     .history-item {
       background: var(--card);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 12px;
       border: 1px solid var(--border);
-      transition: all 0.2s;
     }
-    
-    .history-item:hover {
-      border-color: var(--primary);
-    }
-    
-    .history-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    
-    .history-date {
-      font-weight: 600;
-    }
-    
-    .history-badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    
-    .history-badge.ok {
-      background: #dcfce7;
-      color: var(--success);
-    }
-    
-    .history-badge.diff {
-      background: #fee2e2;
-      color: var(--danger);
-    }
-    
-    .history-stats {
-      display: flex;
-      gap: 16px;
-      font-size: 0.875rem;
-    }
-    
-    .history-stat {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    
-    .history-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      justify-content: flex-end;
-    }
-    
-    .history-actions button {
-      padding: 6px 12px;
-      font-size: 0.75rem;
-      background: var(--border);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .history-date { font-weight: 600; }
+    .history-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+    .history-badge.ok { background: #dcfce7; color: var(--success); }
+    .history-badge.diff { background: #fee2e2; color: var(--danger); }
+    .history-stats { display: flex; gap: 16px; font-size: 0.875rem; }
+    .history-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+    .history-actions button { padding: 6px 12px; font-size: 0.75rem; background: var(--border); border: none; border-radius: 6px; cursor: pointer; }
     .history-actions button.edit-btn { background: var(--info); color: white; }
     .history-actions button.delete-btn { background: var(--danger); color: white; }
-    
-    /* Bottom Navigation */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -475,7 +242,6 @@
       padding: 8px 0;
       padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
-    
     .nav-item {
       display: flex;
       flex-direction: column;
@@ -486,153 +252,43 @@
       color: var(--text-muted);
       font-size: 0.75rem;
       cursor: pointer;
-      transition: color 0.2s;
     }
-    
-    .nav-item.active {
-      color: var(--primary);
-    }
-    
-    .nav-icon {
-      font-size: 1.25rem;
-      margin-bottom: 4px;
-    }
-    
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-    }
-    
-    .empty-icon {
-      font-size: 3rem;
-      margin-bottom: 16px;
-    }
-    
-    /* Screens */
-    .screen {
-      display: none;
-    }
-    
-    .screen.active {
-      display: block;
-    }
-    
-    /* Difference Alert */
-    .alert {
-      padding: 14px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .alert-success {
-      background: #dcfce7;
-      color: #166534;
-    }
-    
-    .alert-danger {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-    
-    .alert-warning {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    
-    /* File Input */
-    .file-input-wrapper {
-      position: relative;
-    }
-    
-    .file-input {
-      display: none;
-    }
-    
-    .file-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      border: 2px dashed var(--border);
-      border-radius: 10px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s;
-    }
-    
-    .file-label:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-    
-    .file-preview {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px;
-      background: var(--background);
-      border-radius: 8px;
-      margin-top: 8px;
-    }
-    
-    .file-remove {
-      margin-left: auto;
-      background: none;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-    }
-    
-    /* Print Styles */
-    @media print {
-      body { background: white; }
-      .bottom-nav, .btn, .modal-overlay { display: none !important; }
-      .container { max-width: 100%; }
-    }
-    
-    /* Responsive */
-    @media (min-width: 768px) {
-      .container {
-        padding: 24px;
-      }
-      
-      .modal {
-        border-radius: 20px;
-        margin: auto;
-        max-height: 80vh;
-      }
-      
-      .modal-overlay {
-        align-items: center;
-      }
-    }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 1.25rem; margin-bottom: 4px; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .alert { padding: 14px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .alert-success { background: #dcfce7; color: #166534; }
+    .alert-danger { background: #fee2e2; color: #991b1b; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .file-input-wrapper { position: relative; }
+    .file-input { display: none; }
+    .file-label { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 2px dashed var(--border); border-radius: 10px; cursor: pointer; color: var(--text-muted); }
+    .file-label:hover { border-color: var(--primary); color: var(--primary); }
+    .file-preview { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--background); border-radius: 8px; margin-top: 8px; }
+    .file-remove { margin-left: auto; background: none; border: none; color: var(--danger); cursor: pointer; }
+    @media print { body { background: white; } .bottom-nav, .btn, .modal-overlay { display: none !important; } .container { max-width: 100%; } }
+    @media (min-width: 768px) { .container { padding: 24px; } .modal { border-radius: 20px; margin: auto; max-height: 80vh; } .modal-overlay { align-items: center; } }
   </style>
 </head>
 <body>
-  <!-- Header -->
   <header class="header">
+    <button class="back-btn" id="backButton" onclick="handleBackButton()">←</button>
     <h1>Fechamento de Caixa</h1>
     <p class="header-subtitle" id="currentDate"></p>
   </header>
 
-  <!-- Tela Inicial (Sem caixa aberto) -->
+  <!-- Tela Inicial -->
   <div id="screenHome" class="screen">
     <div class="container">
       <div class="card" style="text-align: center; padding: 40px 20px;">
         <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/photo_5147739791884487662_y-aqJfA8dSVKsbFxUY4SAFjzfle6VRgG.jpg" alt="L.A. Logo" style="width: 120px; height: auto; margin-bottom: 20px;">
         <h2 style="margin-bottom: 8px;">Bem-vindo!</h2>
         <p style="color: var(--text-muted); margin-bottom: 24px;">Nenhum caixa aberto no momento</p>
-        <button class="btn btn-primary" onclick="showScreen('screenOpenRegister')">
-          📂 Abrir Novo Caixa
-        </button>
-        <button class="btn btn-outline" style="margin-top: 12px;" onclick="showScreen('screenHistory')">
-          📋 Ver Histórico
-        </button>
+        <button class="btn btn-primary" onclick="navigateToScreen('screenOpenRegister')">📂 Abrir Novo Caixa</button>
+        <button class="btn btn-outline" style="margin-top: 12px;" onclick="navigateToScreen('screenHistory')">📋 Ver Histórico</button>
       </div>
     </div>
   </div>
@@ -652,7 +308,7 @@
             <input type="number" class="form-input" id="openingBalance" step="0.01" min="0" placeholder="0,00" required>
           </div>
           <div class="btn-group">
-            <button type="button" class="btn btn-secondary" onclick="showScreen('screenHome')">Cancelar</button>
+            <button type="button" class="btn btn-secondary" onclick="goBack()">Cancelar</button>
             <button type="submit" class="btn btn-primary">Abrir Caixa</button>
           </div>
         </form>
@@ -663,79 +319,44 @@
   <!-- Tela Dashboard (Caixa aberto) -->
   <div id="screenDashboard" class="screen">
     <div class="container">
-      <!-- Cards de Resumo -->
       <div class="summary-grid">
         <div class="card" style="grid-column: span 2;">
           <div class="card-header">
             <div class="card-icon green">💵</div>
             <div>
-              <div class="card-title">Saldo Esperado</div>
+              <div class="card-title">Saldo Esperado (apenas Dinheiro)</div>
               <div class="card-value" id="expectedBalance">R$ 0,00</div>
             </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title">Saldo Inicial</div>
-          <div class="card-value" id="openingBalanceDisplay">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Transações em Dinheiro</div>
-          <div class="card-value" id="cashTransactions">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Entradas</div>
-          <div class="card-value green" id="totalIncome">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Saídas</div>
-          <div class="card-value red" id="totalExpenses">R$ 0,00</div>
-        </div>
+        <div class="card"><div class="card-title">Saldo Inicial</div><div class="card-value" id="openingBalanceDisplay">R$ 0,00</div></div>
+        <div class="card"><div class="card-title">Total em Dinheiro</div><div class="card-value" id="cashTransactions">R$ 0,00</div></div>
+        <div class="card"><div class="card-title">Entradas (todas)</div><div class="card-value green" id="totalIncome">R$ 0,00</div></div>
+        <div class="card"><div class="card-title">Saídas (todas)</div><div class="card-value red" id="totalExpenses">R$ 0,00</div></div>
       </div>
-
-      <!-- Botões de Ação -->
       <div class="btn-group" style="margin-bottom: 16px;">
         <button class="btn btn-success" onclick="openModal('modalAddTransaction')">+ Lançamento</button>
         <button class="btn btn-danger" onclick="openModal('modalCloseRegister')">Fechar Caixa</button>
       </div>
-
-      <!-- Lista de Transações -->
       <h3 style="margin-bottom: 12px;">Lançamentos do Dia</h3>
-      <div id="transactionList" class="transaction-list">
-        <div class="empty-state">
-          <div class="empty-icon">📝</div>
-          <p>Nenhum lançamento ainda</p>
-        </div>
-      </div>
+      <div id="transactionList" class="transaction-list"><div class="empty-state"><div class="empty-icon">📝</div><p>Nenhum lançamento ainda</p></div></div>
     </div>
   </div>
 
   <!-- Tela Histórico -->
   <div id="screenHistory" class="screen">
     <div class="container">
-      <button class="btn btn-sm btn-outline" style="margin-bottom: 16px;" onclick="goBackFromHistory()">
-        ← Voltar
-      </button>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h2>Histórico</h2>
-        <button class="btn btn-sm btn-outline" onclick="openModal('modalMonthlyReport')">📊 Relatório Mensal/Anual</button>
+        <button class="btn btn-sm btn-outline" onclick="openModal('modalMonthlyReport')">📊 Relatório</button>
       </div>
-      <div id="historyList">
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <p>Nenhum fechamento registrado</p>
-        </div>
-      </div>
+      <div id="historyList"><div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum fechamento registrado</p></div></div>
     </div>
   </div>
 
   <!-- Tela Detalhes do Caixa -->
   <div id="screenDetail" class="screen">
-    <div class="container">
-      <button class="btn btn-sm btn-outline" style="margin-bottom: 16px;" onclick="showScreen('screenHistory')">
-        ← Voltar
-      </button>
-      <div id="detailContent"></div>
-    </div>
+    <div class="container"><div id="detailContent"></div></div>
   </div>
 
   <!-- Modal Adicionar Transação -->
@@ -773,13 +394,8 @@
           <label class="form-label">Anexo (opcional)</label>
           <div class="file-input-wrapper">
             <input type="file" class="file-input" id="transactionFile" accept="image/*,.pdf">
-            <label class="file-label" for="transactionFile">
-              📎 Clique para anexar arquivo
-            </label>
-            <div id="filePreview" class="file-preview" style="display: none;">
-              <span id="fileName"></span>
-              <button type="button" class="file-remove" onclick="removeFile()">✕</button>
-            </div>
+            <label class="file-label" for="transactionFile">📎 Clique para anexar arquivo</label>
+            <div id="filePreview" class="file-preview" style="display: none;"><span id="fileName"></span><button type="button" class="file-remove" onclick="removeFile()">✕</button></div>
           </div>
         </div>
         <button type="submit" class="btn btn-primary">Adicionar</button>
@@ -795,40 +411,28 @@
         <button class="modal-close" onclick="closeModal('modalCloseRegister')">×</button>
       </div>
       <form id="formCloseRegister">
-        <!-- Transações em Dinheiro -->
         <div class="card" style="background: var(--background); margin-bottom: 16px;">
-          <div class="card-title" style="margin-bottom: 8px;">💵 Transações em Dinheiro</div>
+          <div class="card-title" style="margin-bottom: 8px;">💵 Resumo em Dinheiro</div>
           <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 4px;">
-            <span>Entradas:</span>
-            <span class="green" id="closeCashIncome">R$ 0,00</span>
+            <span>Entradas em Dinheiro:</span><span class="green" id="closeCashIncome">R$ 0,00</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 8px;">
-            <span>Saídas:</span>
-            <span class="red" id="closeCashExpenses">R$ 0,00</span>
+            <span>Saídas em Dinheiro:</span><span class="red" id="closeCashExpenses">R$ 0,00</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-weight: 600; padding-top: 8px; border-top: 1px solid var(--border);">
-            <span>Total em Dinheiro:</span>
-            <span id="closeCashTotal">R$ 0,00</span>
+            <span>Saldo Esperado em Dinheiro:</span><span id="closeCashTotal">R$ 0,00</span>
           </div>
         </div>
-
         <div class="summary-grid" style="margin-bottom: 16px;">
-          <div class="summary-item">
-            <div class="summary-label">Saldo Esperado</div>
-            <div class="summary-value" id="closeExpectedBalance">R$ 0,00</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Saldo Inicial</div>
-            <div class="summary-value" id="closeOpeningBalance">R$ 0,00</div>
-          </div>
+          <div class="summary-item"><div class="summary-label">Saldo Esperado (Dinheiro)</div><div class="summary-value" id="closeExpectedBalance">R$ 0,00</div></div>
+          <div class="summary-item"><div class="summary-label">Saldo Inicial</div><div class="summary-value" id="closeOpeningBalance">R$ 0,00</div></div>
         </div>
-
         <div class="form-group">
           <label class="form-label">Venda Total Diária *</label>
           <input type="number" class="form-input" id="dailyTotalSales" step="0.01" min="0" placeholder="0,00" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Valor Contado *</label>
+          <label class="form-label">Valor Contado (em espécie) *</label>
           <input type="number" class="form-input" id="countedBalance" step="0.01" min="0" placeholder="0,00" required oninput="calculateChange()">
         </div>
         <div class="form-group">
@@ -837,9 +441,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Troco no Caixa</label>
-          <div class="card" style="background: var(--background);">
-            <div class="card-value" id="changeInRegister">R$ 0,00</div>
-          </div>
+          <div class="card" style="background: var(--background);"><div class="card-value" id="changeInRegister">R$ 0,00</div></div>
         </div>
         <div id="differenceAlert" style="display: none;"></div>
         <div class="form-group">
@@ -911,39 +513,45 @@
     </div>
   </div>
 
+  <!-- Modal Dashboard Popup -->
+  <div id="modalDashboardPopup" class="modal-overlay dashboard-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Dashboard</h3>
+        <button class="modal-close" onclick="closeModal('modalDashboardPopup')">×</button>
+      </div>
+      <div id="dashboardPopupContent" class="dashboard-container"></div>
+      <div class="btn-group" style="margin-top: 16px;">
+        <button class="btn btn-outline" onclick="closeModal('modalDashboardPopup')">Fechar</button>
+        <button class="btn btn-primary" id="shareDashboardBtn">📤 Compartilhar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Navigation -->
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" data-screen="screenDashboard" onclick="navigateTo('screenDashboard', this)">
-      <span class="nav-icon">🏠</span>
-      <span>Início</span>
+      <span class="nav-icon">🏠</span><span>Início</span>
     </button>
     <button class="nav-item" data-screen="screenHistory" onclick="navigateTo('screenHistory', this)">
-      <span class="nav-icon">📋</span>
-      <span>Histórico</span>
+      <span class="nav-icon">📋</span><span>Histórico</span>
     </button>
   </nav>
 
   <script>
-    // Estado da Aplicação
+    // -------------------- ESTADO --------------------
     let state = {
       currentRegister: null,
       transactions: [],
       history: [],
       selectedFile: null
     };
+    let currentReportType = 'month';
+    let navigationStack = [];
+    let currentDashboardData = null;
+    let currentDashboardTitle = '';
 
-    let currentReportType = 'month'; // 'month' or 'year'
-
-    // Inicialização
-    document.addEventListener('DOMContentLoaded', function() {
-      loadFromStorage();
-      updateCurrentDate();
-      checkOpenRegister();
-      setupForms();
-      populateYearSelect();
-    });
-
-    // Carregar dados do localStorage
+    // -------------------- PERSISTÊNCIA --------------------
     function loadFromStorage() {
       const saved = localStorage.getItem('cashRegisterApp');
       if (saved) {
@@ -953,8 +561,6 @@
         state.history = data.history || [];
       }
     }
-
-    // Salvar dados no localStorage
     function saveToStorage() {
       localStorage.setItem('cashRegisterApp', JSON.stringify({
         currentRegister: state.currentRegister,
@@ -963,379 +569,97 @@
       }));
     }
 
-    // Atualizar data atual
+    // -------------------- NAVEGAÇÃO --------------------
     function updateCurrentDate() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       document.getElementById('currentDate').textContent = now.toLocaleDateString('pt-BR', options);
     }
+    function getRootScreen() { return state.currentRegister ? 'screenDashboard' : 'screenHome'; }
+    function getCurrentScreen() {
+      const active = document.querySelector('.screen.active');
+      return active ? active.id : null;
+    }
+    function showScreenInternal(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      if (screenId === 'screenDashboard' || screenId === 'screenHistory') {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+          if (item.getAttribute('data-screen') === screenId) item.classList.add('active');
+          else item.classList.remove('active');
+        });
+      }
+      if (screenId === 'screenHistory') renderHistory();
+      if (screenId === 'screenDashboard' && state.currentRegister) updateDashboard();
+    }
+    function navigateToScreen(screenId) {
+      const current = getCurrentScreen();
+      if (current === screenId) return;
+      if (current) navigationStack.push(current);
+      showScreenInternal(screenId);
+      updateBackButtonVisibility();
+      history.pushState({ screen: screenId }, '', '');
+    }
+    function updateBackButtonVisibility() {
+      const backBtn = document.getElementById('backButton');
+      const current = getCurrentScreen();
+      const root = getRootScreen();
+      if (current !== root && current !== 'screenHome' && current !== 'screenDashboard') backBtn.classList.add('visible');
+      else backBtn.classList.remove('visible');
+    }
+    function handleBackButton() {
+      const openModal = document.querySelector('.modal-overlay.active');
+      if (openModal) { openModal.classList.remove('active'); return; }
+      goBack();
+    }
+    function goBack() {
+      if (navigationStack.length > 0) {
+        const prev = navigationStack.pop();
+        showScreenInternal(prev);
+        updateBackButtonVisibility();
+        history.back();
+      } else {
+        const root = getRootScreen();
+        showScreenInternal(root);
+        updateBackButtonVisibility();
+        history.pushState({ screen: root }, '', '');
+      }
+    }
+    function navigateTo(screenId, btn) {
+      if (!state.currentRegister && screenId === 'screenDashboard') navigateToScreen('screenHome');
+      else navigateToScreen(screenId);
+    }
+    function goBackFromHistory() { goBack(); }
+    function setupNavigation() {
+      const backBtn = document.getElementById('backButton');
+      backBtn.addEventListener('click', handleBackButton);
+      window.addEventListener('popstate', function(event) {
+        if (navigationStack.length > 0) {
+          const prev = navigationStack.pop();
+          showScreenInternal(prev);
+        } else {
+          showScreenInternal(getRootScreen());
+        }
+        updateBackButtonVisibility();
+      });
+    }
 
-    // Verificar se há caixa aberto
+    // -------------------- ABERTURA / FECHAMENTO CAIXA --------------------
     function checkOpenRegister() {
       if (state.currentRegister) {
-        showScreen('screenDashboard');
+        showScreenInternal('screenDashboard');
         updateDashboard();
         document.getElementById('bottomNav').style.display = 'flex';
       } else {
-        showScreen('screenHome');
+        showScreenInternal('screenHome');
         document.getElementById('bottomNav').style.display = 'none';
       }
+      updateBackButtonVisibility();
     }
-
-    // Mostrar tela
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-      
-      if (screenId === 'screenHistory') {
-        renderHistory();
-      }
-    }
-
-    // Navegar
-    function navigateTo(screenId, btn) {
-      if (!state.currentRegister && screenId === 'screenDashboard') {
-        showScreen('screenHome');
-        return;
-      }
-      
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      btn.classList.add('active');
-      showScreen(screenId);
-    }
-
-    // Voltar do histórico
-    function goBackFromHistory() {
-      if (state.currentRegister) {
-        showScreen('screenDashboard');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.querySelector('.nav-item[data-screen="screenDashboard"]').classList.add('active');
-      } else {
-        showScreen('screenHome');
-      }
-    }
-
-    // Configurar formulários
-    function setupForms() {
-      // Abertura de Caixa
-      document.getElementById('formOpenRegister').addEventListener('submit', function(e) {
-        e.preventDefault();
-        openRegister();
-      });
-
-      // Adicionar Transação
-      document.getElementById('formAddTransaction').addEventListener('submit', function(e) {
-        e.preventDefault();
-        addTransaction();
-      });
-
-      // Fechar Caixa
-      document.getElementById('formCloseRegister').addEventListener('submit', function(e) {
-        e.preventDefault();
-        closeRegister();
-      });
-
-      // Editar Histórico
-      document.getElementById('formEditHistory').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveEditHistory();
-      });
-
-      // Preview de arquivo
-      document.getElementById('transactionFile').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          state.selectedFile = file;
-          document.getElementById('fileName').textContent = file.name;
-          document.getElementById('filePreview').style.display = 'flex';
-        }
-      });
-
-      // Relatório
-      const now = new Date();
-      document.getElementById('reportMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    }
-
-    // Popular select de anos
-    function populateYearSelect() {
-      const years = [];
-      const currentYear = new Date().getFullYear();
-      for (let y = currentYear - 5; y <= currentYear + 1; y++) {
-        years.push(y);
-      }
-      const select = document.getElementById('reportYear');
-      select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-      select.value = currentYear;
-    }
-
-    // Tipo de relatório
-    function setReportType(type) {
-      currentReportType = type;
-      const monthDiv = document.getElementById('monthSelector');
-      const yearDiv = document.getElementById('yearSelector');
-      if (type === 'month') {
-        monthDiv.style.display = 'block';
-        yearDiv.style.display = 'none';
-        document.getElementById('reportTypeMonthly').classList.add('active');
-        document.getElementById('reportTypeYearly').classList.remove('active');
-      } else {
-        monthDiv.style.display = 'none';
-        yearDiv.style.display = 'block';
-        document.getElementById('reportTypeMonthly').classList.remove('active');
-        document.getElementById('reportTypeYearly').classList.add('active');
-      }
-      generateReport();
-    }
-
-    // Gerar relatório (mensal ou anual)
-    function generateReport() {
-      if (currentReportType === 'month') {
-        generateMonthlyReport();
-      } else {
-        generateYearlyReport();
-      }
-    }
-
-    // Relatório mensal (mantido mas melhorado)
-    function generateMonthlyReport() {
-      const monthValue = document.getElementById('reportMonth').value;
-      if (!monthValue) return;
-      const [year, month] = monthValue.split('-').map(Number);
-      const monthlyData = state.history.filter(h => {
-        const d = new Date(h.closedAt);
-        return d.getFullYear() === year && d.getMonth() + 1 === month;
-      });
-
-      if (monthlyData.length === 0) {
-        document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento encontrado neste período</p></div>`;
-        return;
-      }
-
-      const totalIncome = monthlyData.reduce((sum, h) => sum + h.totalIncome, 0);
-      const totalExpenses = monthlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
-      const totalDifference = monthlyData.reduce((sum, h) => sum + h.difference, 0);
-      const totalDailySales = monthlyData.reduce((sum, h) => sum + (h.dailyTotalSales || 0), 0);
-
-      document.getElementById('reportContent').innerHTML = `
-        <div class="summary-grid">
-          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${monthlyData.length}</div></div>
-          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div></div>
-          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
-          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
-          <div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total do Mês</div><div class="summary-value green">${formatCurrency(totalDailySales)}</div></div>
-        </div>
-        <div style="margin-top: 16px;">${monthlyData.map(h => `
-          <div class="history-item" style="cursor: default;">
-            <div class="history-header"><span class="history-date">${formatDate(h.closedAt)}</span><span class="history-badge ${Math.abs(h.difference) < 0.01 ? 'ok' : 'diff'}">${Math.abs(h.difference) < 0.01 ? '✓' : formatCurrency(h.difference)}</span></div>
-            <div class="history-stats"><span>📈 ${formatCurrency(h.totalIncome)}</span><span>📉 ${formatCurrency(h.totalExpenses)}</span></div>
-          </div>
-        `).join('')}</div>
-      `;
-    }
-
-    // Relatório anual
-    function generateYearlyReport() {
-      const year = parseInt(document.getElementById('reportYear').value);
-      const yearlyData = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
-      
-      if (yearlyData.length === 0) {
-        document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento encontrado neste ano</p></div>`;
-        return;
-      }
-
-      const totalIncome = yearlyData.reduce((sum, h) => sum + h.totalIncome, 0);
-      const totalExpenses = yearlyData.reduce((sum, h) => sum + h.totalExpenses, 0);
-      const totalDifference = yearlyData.reduce((sum, h) => sum + h.difference, 0);
-      const totalDailySales = yearlyData.reduce((sum, h) => sum + (h.dailyTotalSales || 0), 0);
-
-      // Agrupar por mês
-      const months = {};
-      for (let i = 1; i <= 12; i++) months[i] = { income: 0, expenses: 0, sales: 0, count: 0 };
-      yearlyData.forEach(h => {
-        const m = new Date(h.closedAt).getMonth() + 1;
-        months[m].income += h.totalIncome;
-        months[m].expenses += h.totalExpenses;
-        months[m].sales += (h.dailyTotalSales || 0);
-        months[m].count++;
-      });
-
-      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      let monthsHtml = '<div style="margin-top: 16px;"><h4>Detalhamento Mensal</h4>';
-      for (let m = 1; m <= 12; m++) {
-        if (months[m].count > 0) {
-          monthsHtml += `
-            <div class="history-item" style="cursor: default; margin-bottom: 8px;">
-              <div class="history-header"><span class="history-date">${monthNames[m-1]}</span><span class="history-badge ok">${months[m].count} fechamento(s)</span></div>
-              <div class="history-stats"><span>📈 ${formatCurrency(months[m].income)}</span><span>📉 ${formatCurrency(months[m].expenses)}</span><span>🛒 ${formatCurrency(months[m].sales)}</span></div>
-            </div>
-          `;
-        }
-      }
-      monthsHtml += '</div>';
-
-      document.getElementById('reportContent').innerHTML = `
-        <div class="summary-grid">
-          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${yearlyData.length}</div></div>
-          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDifference >= 0 ? 'green' : 'red'}">${formatCurrency(totalDifference)}</div></div>
-          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
-          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
-          <div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total do Ano</div><div class="summary-value green">${formatCurrency(totalDailySales)}</div></div>
-        </div>
-        ${monthsHtml}
-      `;
-    }
-
-    // Imprimir relatório atual
-    function printReport() {
-      const content = document.getElementById('reportContent').innerHTML;
-      const title = currentReportType === 'month' ? 'Relatório Mensal' : 'Relatório Anual';
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><meta charset="UTF-8"><title>${title}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-          .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-          .summary-item { background: #f5f5f5; padding: 14px; border-radius: 10px; text-align: center; }
-          .green { color: #16a34a; } .red { color: #dc2626; }
-          .history-item { border: 1px solid #ddd; padding: 12px; margin-bottom: 8px; border-radius: 8px; }
-        </style>
-        </head><body><h1>${title}</h1>${content}</body></html>
-      `);
-      win.document.close();
-      win.print();
-    }
-
-    // Abrir Dashboard em nova aba
-    function openDashboard() {
-      let data;
-      let title;
-      if (currentReportType === 'month') {
-        const monthValue = document.getElementById('reportMonth').value;
-        if (!monthValue) return;
-        const [year, month] = monthValue.split('-').map(Number);
-        data = state.history.filter(h => {
-          const d = new Date(h.closedAt);
-          return d.getFullYear() === year && d.getMonth() + 1 === month;
-        });
-        title = `Dashboard - ${formatMonthYear(monthValue)}`;
-      } else {
-        const year = parseInt(document.getElementById('reportYear').value);
-        data = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
-        title = `Dashboard - ${year}`;
-      }
-
-      if (data.length === 0) {
-        alert('Não há dados para o período selecionado.');
-        return;
-      }
-
-      // Gerar HTML do dashboard
-      const dashboardHtml = generateDashboardHtml(data, title);
-      const newWin = window.open();
-      newWin.document.write(dashboardHtml);
-      newWin.document.close();
-    }
-
-    function generateDashboardHtml(data, title) {
-      // Totais
-      const totalIncome = data.reduce((s, h) => s + h.totalIncome, 0);
-      const totalExpenses = data.reduce((s, h) => s + h.totalExpenses, 0);
-      const totalDiff = data.reduce((s, h) => s + h.difference, 0);
-      const totalSales = data.reduce((s, h) => s + (h.dailyTotalSales || 0), 0);
-      
-      // Dados para gráfico: por dia (ordem crescente)
-      const sorted = [...data].sort((a,b) => new Date(a.closedAt) - new Date(b.closedAt));
-      const labels = sorted.map(h => formatDate(h.closedAt));
-      const incomeData = sorted.map(h => h.totalIncome);
-      const expensesData = sorted.map(h => h.totalExpenses);
-      const salesData = sorted.map(h => h.dailyTotalSales || 0);
-
-      return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${title}</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    h1 { margin-bottom: 20px; text-align: center; color: #16a34a; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
-    .card { background: white; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
-    .card .value { font-size: 1.8rem; font-weight: bold; }
-    .green { color: #22c55e; }
-    .red { color: #ef4444; }
-    .chart-container { background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    canvas { max-height: 400px; width: 100%; }
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-    th { background: #f8fafc; font-weight: 600; }
-    .text-right { text-align: right; }
-    @media (max-width: 640px) { th, td { padding: 8px; font-size: 0.8rem; } }
-  </style>
-</head>
-<body>
-<div class="container">
-  <h1>${title}</h1>
-  <div class="cards">
-    <div class="card"><h3>Fechamentos</h3><div class="value">${data.length}</div></div>
-    <div class="card"><h3>Total Entradas</h3><div class="value green">${formatCurrency(totalIncome)}</div></div>
-    <div class="card"><h3>Total Saídas</h3><div class="value red">${formatCurrency(totalExpenses)}</div></div>
-    <div class="card"><h3>Diferença Total</h3><div class="value ${totalDiff >= 0 ? 'green' : 'red'}">${formatCurrency(totalDiff)}</div></div>
-    <div class="card"><h3>Venda Total</h3><div class="value green">${formatCurrency(totalSales)}</div></div>
-  </div>
-  <div class="chart-container">
-    <canvas id="dailyChart"></canvas>
-  </div>
-  <table>
-    <thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead>
-    <tbody>
-      ${sorted.map(h => `
-        <tr>
-          <td>${formatDate(h.closedAt)}</td>
-          <td>${h.operatorName}</td>
-          <td class="green text-right">${formatCurrency(h.totalIncome)}</td>
-          <td class="red text-right">${formatCurrency(h.totalExpenses)}</td>
-          <td class="text-right">${formatCurrency(h.closingBalance)}</td>
-          <td class="${h.difference >= 0 ? 'green' : 'red'} text-right">${formatCurrency(h.difference)}</td>
-          <td class="green text-right">${formatCurrency(h.dailyTotalSales || 0)}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-</div>
-<script>
-  const ctx = document.getElementById('dailyChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ${JSON.stringify(labels)},
-      datasets: [
-        { label: 'Entradas', data: ${JSON.stringify(incomeData)}, backgroundColor: '#22c55e', borderRadius: 6 },
-        { label: 'Saídas', data: ${JSON.stringify(expensesData)}, backgroundColor: '#ef4444', borderRadius: 6 },
-        { label: 'Venda Diária', data: ${JSON.stringify(salesData)}, backgroundColor: '#f59e0b', borderRadius: 6 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
-  });
-<\/script>
-</body>
-</html>`;
-    }
-
-    function formatMonthYear(monthValue) {
-      const [year, month] = monthValue.split('-');
-      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      return `${months[parseInt(month)-1]} ${year}`;
-    }
-
-    // Abrir caixa
     function openRegister() {
       const operatorName = document.getElementById('operatorName').value || 'Operador';
       const openingBalance = parseFloat(document.getElementById('openingBalance').value) || 0;
-
       state.currentRegister = {
         id: Date.now().toString(),
         operatorName,
@@ -1344,45 +668,33 @@
         status: 'open'
       };
       state.transactions = [];
-      
       saveToStorage();
       checkOpenRegister();
-      
+      navigationStack = [];
       document.getElementById('formOpenRegister').reset();
     }
-
-    // Atualizar dashboard
     function updateDashboard() {
       if (!state.currentRegister) return;
-
       const opening = state.currentRegister.openingBalance;
-      const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-      const expected = opening + income - expenses;
-
-      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
-      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
-      const cashTotal = opening + cashIncome - cashExpenses;
-
+      const totalIncomeAll = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const totalExpensesAll = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpected = opening + cashIncome - cashExpenses;
       document.getElementById('openingBalanceDisplay').textContent = formatCurrency(opening);
-      document.getElementById('totalIncome').textContent = formatCurrency(income);
-      document.getElementById('totalExpenses').textContent = formatCurrency(expenses);
-      document.getElementById('expectedBalance').textContent = formatCurrency(expected);
-      document.getElementById('cashTransactions').textContent = formatCurrency(cashTotal);
-
+      document.getElementById('totalIncome').textContent = formatCurrency(totalIncomeAll);
+      document.getElementById('totalExpenses').textContent = formatCurrency(totalExpensesAll);
+      document.getElementById('expectedBalance').textContent = formatCurrency(cashExpected);
+      document.getElementById('cashTransactions').textContent = formatCurrency(cashExpected);
       renderTransactions();
     }
-
-    // Renderizar transações
     function renderTransactions() {
       const list = document.getElementById('transactionList');
-      
-      if (state.transactions.length === 0) {
+      if (!state.transactions.length) {
         list.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><p>Nenhum lançamento ainda</p></div>`;
         return;
       }
-
-      list.innerHTML = state.transactions.map((t, index) => `
+      list.innerHTML = state.transactions.map((t, idx) => `
         <div class="transaction-item">
           <div class="transaction-icon ${t.type}">${t.type === 'income' ? '↑' : '↓'}</div>
           <div class="transaction-info">
@@ -1390,50 +702,37 @@
             <div class="transaction-category">${t.category}${t.fileName ? ' 📎' : ''}</div>
           </div>
           <div class="transaction-amount ${t.type}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
-          <button class="transaction-delete" onclick="deleteTransaction(${index})">🗑️</button>
+          <button class="transaction-delete" onclick="deleteTransaction(${idx})">🗑️</button>
         </div>
       `).join('');
     }
-
     function setTransactionType(type, btn) {
       document.getElementById('transactionType').value = type;
       document.querySelectorAll('#formAddTransaction .tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
     }
-
     function addTransaction() {
       const type = document.getElementById('transactionType').value;
       const amount = parseFloat(document.getElementById('transactionAmount').value);
       const category = document.getElementById('transactionCategory').value;
       const description = document.getElementById('transactionDescription').value;
-
-      if (!amount || amount <= 0) {
-        alert('Informe um valor válido');
-        return;
-      }
-
+      if (!amount || amount <= 0) { alert('Informe um valor válido'); return; }
       const transaction = {
         id: Date.now().toString(),
-        type,
-        amount,
-        category,
-        description,
+        type, amount, category, description,
         fileName: state.selectedFile ? state.selectedFile.name : null,
         createdAt: new Date().toISOString()
       };
-
       state.transactions.push(transaction);
       saveToStorage();
       updateDashboard();
       closeModal('modalAddTransaction');
-
       document.getElementById('formAddTransaction').reset();
       document.getElementById('transactionType').value = 'income';
       document.querySelectorAll('#formAddTransaction .tab').forEach(t => t.classList.remove('active'));
       document.querySelector('#formAddTransaction .tab[data-type="income"]').classList.add('active');
       removeFile();
     }
-
     function deleteTransaction(index) {
       if (confirm('Tem certeza que deseja excluir este lançamento?')) {
         state.transactions.splice(index, 1);
@@ -1441,116 +740,85 @@
         updateDashboard();
       }
     }
-
     function removeFile() {
       state.selectedFile = null;
       document.getElementById('transactionFile').value = '';
       document.getElementById('filePreview').style.display = 'none';
     }
-
-    function openModal(modalId) {
-      document.getElementById(modalId).classList.add('active');
-      if (modalId === 'modalCloseRegister') updateCloseModal();
-      if (modalId === 'modalMonthlyReport') generateReport();
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
-    }
-
     function updateCloseModal() {
       const opening = state.currentRegister.openingBalance;
-      const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-      const expected = opening + income - expenses;
-
-      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
-      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((sum, t) => sum + t.amount, 0);
-      const cashTotal = opening + cashIncome - cashExpenses;
-
+      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpected = opening + cashIncome - cashExpenses;
       document.getElementById('closeOpeningBalance').textContent = formatCurrency(opening);
-      document.getElementById('closeExpectedBalance').textContent = formatCurrency(expected);
+      document.getElementById('closeExpectedBalance').textContent = formatCurrency(cashExpected);
       document.getElementById('closeCashIncome').textContent = formatCurrency(cashIncome);
       document.getElementById('closeCashExpenses').textContent = formatCurrency(cashExpenses);
-      document.getElementById('closeCashTotal').textContent = formatCurrency(cashTotal);
+      document.getElementById('closeCashTotal').textContent = formatCurrency(cashExpected);
     }
-
     function calculateChange() {
       const counted = parseFloat(document.getElementById('countedBalance').value) || 0;
       const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0;
-      const change = counted - withdrawal;
-      document.getElementById('changeInRegister').textContent = formatCurrency(change);
-
+      document.getElementById('changeInRegister').textContent = formatCurrency(counted - withdrawal);
       const opening = state.currentRegister.openingBalance;
-      const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-      const expected = opening + income - expenses;
-      const difference = counted - expected;
-
+      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpected = opening + cashIncome - cashExpenses;
+      const diff = counted - cashExpected;
       const alertDiv = document.getElementById('differenceAlert');
       if (counted > 0) {
-        if (Math.abs(difference) < 0.01) alertDiv.innerHTML = `<div class="alert alert-success">✓ Caixa confere!</div>`;
-        else if (difference > 0) alertDiv.innerHTML = `<div class="alert alert-warning">↑ Sobra de ${formatCurrency(difference)}</div>`;
-        else alertDiv.innerHTML = `<div class="alert alert-danger">↓ Falta de ${formatCurrency(Math.abs(difference))}</div>`;
+        if (Math.abs(diff) < 0.01) alertDiv.innerHTML = `<div class="alert alert-success">✓ Caixa confere!</div>`;
+        else if (diff > 0) alertDiv.innerHTML = `<div class="alert alert-warning">↑ Sobra de ${formatCurrency(diff)}</div>`;
+        else alertDiv.innerHTML = `<div class="alert alert-danger">↓ Falta de ${formatCurrency(Math.abs(diff))}</div>`;
         alertDiv.style.display = 'block';
-      } else {
-        alertDiv.style.display = 'none';
-      }
+      } else alertDiv.style.display = 'none';
     }
-
     function closeRegister() {
       const dailyTotalSales = parseFloat(document.getElementById('dailyTotalSales').value);
       const counted = parseFloat(document.getElementById('countedBalance').value);
       const withdrawal = parseFloat(document.getElementById('withdrawal').value) || 0;
       const observations = document.getElementById('closeObservations').value;
-
-      if (!dailyTotalSales && dailyTotalSales !== 0) { alert('Informe a venda total diária'); return; }
-      if (!counted && counted !== 0) { alert('Informe o valor contado'); return; }
-
+      if (isNaN(dailyTotalSales)) { alert('Informe a venda total diária'); return; }
+      if (isNaN(counted)) { alert('Informe o valor contado'); return; }
       const opening = state.currentRegister.openingBalance;
-      const income = state.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expenses = state.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-      const expected = opening + income - expenses;
-      const difference = counted - expected;
-      const change = counted - withdrawal;
-
+      const cashIncome = state.transactions.filter(t => t.type === 'income' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpenses = state.transactions.filter(t => t.type === 'expense' && t.category === 'Dinheiro').reduce((s, t) => s + t.amount, 0);
+      const cashExpected = opening + cashIncome - cashExpenses;
+      const diff = counted - cashExpected;
       const closedRegister = {
         ...state.currentRegister,
         closedAt: new Date().toISOString(),
         status: 'closed',
-        closingBalance: expected,
+        closingBalance: cashExpected,
         countedBalance: counted,
-        difference,
+        difference: diff,
         withdrawal,
-        changeInRegister: change,
+        changeInRegister: counted - withdrawal,
         dailyTotalSales,
         observations,
         transactions: [...state.transactions],
-        totalIncome: income,
-        totalExpenses: expenses
+        totalIncome: state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+        totalExpenses: state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
       };
-
       state.history.unshift(closedRegister);
       state.currentRegister = null;
       state.transactions = [];
-      
       saveToStorage();
       closeModal('modalCloseRegister');
       document.getElementById('formCloseRegister').reset();
       document.getElementById('differenceAlert').style.display = 'none';
-      
       checkOpenRegister();
+      navigationStack = [];
       alert('Caixa fechado com sucesso!');
     }
 
-    // Renderizar histórico com botões editar/excluir
+    // -------------------- HISTÓRICO --------------------
     function renderHistory() {
       const list = document.getElementById('historyList');
-      if (state.history.length === 0) {
+      if (!state.history.length) {
         list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum fechamento registrado</p></div>`;
         return;
       }
-
       list.innerHTML = state.history.map((h, idx) => `
         <div class="history-item">
           <div class="history-header">
@@ -1570,7 +838,6 @@
         </div>
       `).join('');
     }
-
     function editHistoryItem(index) {
       const h = state.history[index];
       document.getElementById('editHistoryIndex').value = index;
@@ -1580,34 +847,27 @@
       document.getElementById('editObservations').value = h.observations || '';
       openModal('modalEditHistory');
     }
-
     function saveEditHistory() {
       const index = parseInt(document.getElementById('editHistoryIndex').value);
       if (isNaN(index)) return;
       const h = state.history[index];
       if (!h) return;
-
-      const newDailySales = parseFloat(document.getElementById('editDailyTotalSales').value) || 0;
+      const newDaily = parseFloat(document.getElementById('editDailyTotalSales').value) || 0;
       const newCounted = parseFloat(document.getElementById('editCountedBalance').value) || 0;
       const newWithdrawal = parseFloat(document.getElementById('editWithdrawal').value) || 0;
-      const newObservations = document.getElementById('editObservations').value;
-
-      // Recalcular diferença com base no novo valor contado
-      const newDifference = newCounted - h.closingBalance;
-      
-      h.dailyTotalSales = newDailySales;
+      const newObs = document.getElementById('editObservations').value;
+      const newDiff = newCounted - h.closingBalance;
+      h.dailyTotalSales = newDaily;
       h.countedBalance = newCounted;
       h.withdrawal = newWithdrawal;
-      h.observations = newObservations;
-      h.difference = newDifference;
+      h.observations = newObs;
+      h.difference = newDiff;
       h.changeInRegister = newCounted - newWithdrawal;
-
       saveToStorage();
       closeModal('modalEditHistory');
       renderHistory();
       alert('Fechamento atualizado com sucesso!');
     }
-
     function deleteHistoryItem(index) {
       if (confirm('Tem certeza que deseja excluir este fechamento permanentemente?')) {
         state.history.splice(index, 1);
@@ -1615,29 +875,28 @@
         renderHistory();
       }
     }
-
-    // Mostrar detalhes (mantido)
     function showDetail(index) {
+      navigateToScreen('screenDetail');
       const h = state.history[index];
       document.getElementById('detailContent').innerHTML = `
         <div class="card">
-          <h2 style="margin-bottom: 16px;">Fechamento - ${formatDate(h.closedAt)}</h2>
+          <h2>Fechamento - ${formatDate(h.closedAt)}</h2>
           <div class="summary-grid">
             <div class="summary-item"><div class="summary-label">Operador</div><div class="summary-value">${h.operatorName}</div></div>
             <div class="summary-item"><div class="summary-label">Abertura</div><div class="summary-value">${formatTime(h.openedAt)}</div></div>
             <div class="summary-item"><div class="summary-label">Saldo Inicial</div><div class="summary-value">${formatCurrency(h.openingBalance)}</div></div>
-            <div class="summary-item"><div class="summary-label">Saldo Final</div><div class="summary-value">${formatCurrency(h.closingBalance)}</div></div>
-            <div class="summary-item"><div class="summary-label">Entradas</div><div class="summary-value green">${formatCurrency(h.totalIncome)}</div></div>
-            <div class="summary-item"><div class="summary-label">Saídas</div><div class="summary-value red">${formatCurrency(h.totalExpenses)}</div></div>
+            <div class="summary-item"><div class="summary-label">Saldo Final (Dinheiro)</div><div class="summary-value">${formatCurrency(h.closingBalance)}</div></div>
+            <div class="summary-item"><div class="summary-label">Entradas (todas)</div><div class="summary-value green">${formatCurrency(h.totalIncome)}</div></div>
+            <div class="summary-item"><div class="summary-label">Saídas (todas)</div><div class="summary-value red">${formatCurrency(h.totalExpenses)}</div></div>
             <div class="summary-item"><div class="summary-label">Valor Contado</div><div class="summary-value">${formatCurrency(h.countedBalance)}</div></div>
             <div class="summary-item"><div class="summary-label">Diferença</div><div class="summary-value ${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</div></div>
             <div class="summary-item"><div class="summary-label">Retirada</div><div class="summary-value">${formatCurrency(h.withdrawal || 0)}</div></div>
             <div class="summary-item"><div class="summary-label">Troco no Caixa</div><div class="summary-value">${formatCurrency(h.changeInRegister || 0)}</div></div>
             ${h.dailyTotalSales ? `<div class="summary-item" style="grid-column: span 2; background: #dcfce7;"><div class="summary-label">Venda Total Diária</div><div class="summary-value green">${formatCurrency(h.dailyTotalSales)}</div></div>` : ''}
           </div>
-          ${h.observations ? `<p style="margin-top: 12px; color: var(--text-muted);"><strong>Obs:</strong> ${h.observations}</p>` : ''}
+          ${h.observations ? `<p><strong>Obs:</strong> ${h.observations}</p>` : ''}
         </div>
-        <h3 style="margin: 16px 0 12px;">Transações (${h.transactions.length})</h3>
+        <h3>Transações (${h.transactions.length})</h3>
         <div class="transaction-list">
           ${h.transactions.map(t => `
             <div class="transaction-item">
@@ -1652,50 +911,260 @@
           <button class="btn btn-primary" onclick="shareDetail(${index})">📤 Compartilhar</button>
         </div>
       `;
-      showScreen('screenDetail');
     }
-
     function printDetail(index) {
       const h = state.history[index];
-      const content = generatePrintContent(h);
       const win = window.open('', '_blank');
-      win.document.write(content);
+      win.document.write(generatePrintContent(h));
       win.document.close();
       win.print();
     }
-
     function shareDetail(index) {
       const h = state.history[index];
       const text = `📊 FECHAMENTO DE CAIXA\n📅 ${formatDate(h.closedAt)}\n👤 ${h.operatorName}\n💰 Saldo Inicial: ${formatCurrency(h.openingBalance)}\n📈 Entradas: ${formatCurrency(h.totalIncome)}\n📉 Saídas: ${formatCurrency(h.totalExpenses)}\n💵 Saldo Final: ${formatCurrency(h.closingBalance)}\n🔢 Valor Contado: ${formatCurrency(h.countedBalance)}\n${h.difference !== 0 ? `⚠️ Diferença: ${formatCurrency(h.difference)}` : '✅ Caixa confere!'}\n💸 Retirada: ${formatCurrency(h.withdrawal || 0)}\n🪙 Troco no Caixa: ${formatCurrency(h.changeInRegister || 0)}\n${h.dailyTotalSales ? `🛒 Venda Total Diária: ${formatCurrency(h.dailyTotalSales)}` : ''}`;
       if (navigator.share) navigator.share({ text });
       else { navigator.clipboard.writeText(text); alert('Texto copiado!'); }
     }
-
     function generatePrintContent(h) {
       return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Fechamento de Caixa - ${formatDate(h.closedAt)}</title>
-<style>body{font-family:Arial,sans-serif;padding:20px;max-width:600px;margin:0 auto;}h1{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;}.info{display:flex;justify-content:space-between;margin:8px 0;}.section{margin:20px 0;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f0f0f0;}.total{font-weight:bold;}.green{color:#16a34a;}.red{color:#dc2626;}</style></head>
+<html><head><meta charset="UTF-8"><title>Fechamento - ${formatDate(h.closedAt)}</title>
+<style>body{font-family:Arial;padding:20px;max-width:600px;margin:0 auto;}h1{text-align:center;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}.green{color:#16a34a;}.red{color:#dc2626;}</style></head>
 <body><h1>Fechamento de Caixa</h1>
-<div class="section"><div class="info"><span>Data:</span><span>${formatDate(h.closedAt)}</span></div><div class="info"><span>Operador:</span><span>${h.operatorName}</span></div><div class="info"><span>Abertura:</span><span>${formatTime(h.openedAt)}</span></div><div class="info"><span>Fechamento:</span><span>${formatTime(h.closedAt)}</span></div></div>
-<div class="section"><h3>Resumo Financeiro</h3><div class="info"><span>Saldo Inicial:</span><span>${formatCurrency(h.openingBalance)}</span></div><div class="info"><span>Total Entradas:</span><span class="green">${formatCurrency(h.totalIncome)}</span></div><div class="info"><span>Total Saídas:</span><span class="red">${formatCurrency(h.totalExpenses)}</span></div><div class="info total"><span>Saldo Esperado:</span><span>${formatCurrency(h.closingBalance)}</span></div><div class="info"><span>Valor Contado:</span><span>${formatCurrency(h.countedBalance)}</span></div><div class="info"><span>Diferença:</span><span class="${h.difference >= 0 ? 'green' : 'red'}">${formatCurrency(h.difference)}</span></div><div class="info"><span>Retirada:</span><span>${formatCurrency(h.withdrawal || 0)}</span></div><div class="info"><span>Troco no Caixa:</span><span>${formatCurrency(h.changeInRegister || 0)}</span></div>${h.dailyTotalSales ? `<div class="info total"><span>Venda Total Diária:</span><span class="green">${formatCurrency(h.dailyTotalSales)}</span></div>` : ''}</div>
-<div class="section"><h3>Transações</h3><table><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}</table></div>${h.observations ? `<div class="section"><strong>Observações:</strong> ${h.observations}</div>` : ''}
-</body></html>`;
+<p><strong>Data:</strong> ${formatDate(h.closedAt)}</p><p><strong>Operador:</strong> ${h.operatorName}</p>
+<h3>Resumo</h3>
+<p>Saldo Inicial: ${formatCurrency(h.openingBalance)}</p>
+<p>Entradas: ${formatCurrency(h.totalIncome)}</p>
+<p>Saídas: ${formatCurrency(h.totalExpenses)}</p>
+<p>Saldo Esperado: ${formatCurrency(h.closingBalance)}</p>
+<p>Valor Contado: ${formatCurrency(h.countedBalance)}</p>
+<p>Diferença: ${formatCurrency(h.difference)}</p>
+<p>Retirada: ${formatCurrency(h.withdrawal || 0)}</p>
+<p>Troco: ${formatCurrency(h.changeInRegister || 0)}</p>
+${h.dailyTotalSales ? `<p>Venda Diária: ${formatCurrency(h.dailyTotalSales)}</p>` : ''}
+${h.observations ? `<p>Obs: ${h.observations}</p>` : ''}
+<h3>Transações</h3>
+<table><tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>
+${h.transactions.map(t => `<tr><td>${t.type === 'income' ? 'Entrada' : 'Saída'}</td><td>${t.category}</td><td>${t.description || '-'}</td><td class="${t.type === 'income' ? 'green' : 'red'}">${formatCurrency(t.amount)}</td></tr>`).join('')}
+</table></body></html>`;
     }
 
-    // Utilitários
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+    // -------------------- RELATÓRIOS (MENSAL/ANUAL) --------------------
+    function populateYearSelect() {
+      const currentYear = new Date().getFullYear();
+      const years = [];
+      for (let y = currentYear - 5; y <= currentYear + 1; y++) years.push(y);
+      const select = document.getElementById('reportYear');
+      select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      select.value = currentYear;
     }
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('pt-BR');
+    function setReportType(type) {
+      currentReportType = type;
+      const monthDiv = document.getElementById('monthSelector');
+      const yearDiv = document.getElementById('yearSelector');
+      if (type === 'month') {
+        monthDiv.style.display = 'block';
+        yearDiv.style.display = 'none';
+        document.getElementById('reportTypeMonthly').classList.add('active');
+        document.getElementById('reportTypeYearly').classList.remove('active');
+      } else {
+        monthDiv.style.display = 'none';
+        yearDiv.style.display = 'block';
+        document.getElementById('reportTypeMonthly').classList.remove('active');
+        document.getElementById('reportTypeYearly').classList.add('active');
+      }
+      generateReport();
     }
-    function formatTime(dateStr) {
-      return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    function generateReport() {
+      if (currentReportType === 'month') generateMonthlyReport();
+      else generateYearlyReport();
+    }
+    function generateMonthlyReport() {
+      const monthValue = document.getElementById('reportMonth').value;
+      if (!monthValue) return;
+      const [year, month] = monthValue.split('-').map(Number);
+      const data = state.history.filter(h => {
+        const d = new Date(h.closedAt);
+        return d.getFullYear() === year && d.getMonth() + 1 === month;
+      });
+      if (!data.length) { document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento</p></div>`; return; }
+      const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
+      const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0);
+      const totalDiff = data.reduce((s,h)=>s+h.difference,0);
+      const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0);
+      document.getElementById('reportContent').innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${data.length}</div></div>
+          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
+          <div class="summary-item" style="grid-column: span 2; background:#dcfce7;"><div class="summary-label">Venda Total</div><div class="summary-value green">${formatCurrency(totalSales)}</div></div>
+        </div>
+        <div>${data.map(h => `<div class="history-item"><div class="history-header"><span>${formatDate(h.closedAt)}</span><span class="history-badge ${Math.abs(h.difference)<0.01?'ok':'diff'}">${Math.abs(h.difference)<0.01?'✓':formatCurrency(h.difference)}</span></div><div>📈 ${formatCurrency(h.totalIncome)}  📉 ${formatCurrency(h.totalExpenses)}</div></div>`).join('')}</div>
+      `;
+    }
+    function generateYearlyReport() {
+      const year = parseInt(document.getElementById('reportYear').value);
+      const data = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
+      if (!data.length) { document.getElementById('reportContent').innerHTML = `<div class="empty-state"><p>Nenhum fechamento</p></div>`; return; }
+      const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
+      const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0);
+      const totalDiff = data.reduce((s,h)=>s+h.difference,0);
+      const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0);
+      const months = {};
+      for (let i=1;i<=12;i++) months[i]={income:0,expenses:0,sales:0,count:0};
+      data.forEach(h=>{const m=new Date(h.closedAt).getMonth()+1; months[m].income+=h.totalIncome; months[m].expenses+=h.totalExpenses; months[m].sales+=h.dailyTotalSales||0; months[m].count++;});
+      const monthNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      let monthsHtml='<div><h4>Detalhamento Mensal</h4>';
+      for(let m=1;m<=12;m++) if(months[m].count) monthsHtml+=`<div class="history-item"><div class="history-header"><span>${monthNames[m-1]}</span><span class="history-badge ok">${months[m].count} fechamento(s)</span></div><div>📈 ${formatCurrency(months[m].income)}  📉 ${formatCurrency(months[m].expenses)}  🛒 ${formatCurrency(months[m].sales)}</div></div>`;
+      monthsHtml+='</div>';
+      document.getElementById('reportContent').innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-label">Fechamentos</div><div class="summary-value">${data.length}</div></div>
+          <div class="summary-item"><div class="summary-label">Diferença Total</div><div class="summary-value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Entradas</div><div class="summary-value green">${formatCurrency(totalIncome)}</div></div>
+          <div class="summary-item"><div class="summary-label">Total Saídas</div><div class="summary-value red">${formatCurrency(totalExpenses)}</div></div>
+          <div class="summary-item" style="grid-column: span 2; background:#dcfce7;"><div class="summary-label">Venda Total</div><div class="summary-value green">${formatCurrency(totalSales)}</div></div>
+        </div>
+        ${monthsHtml}
+      `;
+    }
+    function printReport() {
+      const content = document.getElementById('reportContent').innerHTML;
+      const title = currentReportType === 'month' ? 'Relatório Mensal' : 'Relatório Anual';
+      const win = window.open('', '_blank');
+      win.document.write(`<html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Arial;padding:20px;} .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;} .summary-item{background:#f5f5f5;padding:14px;text-align:center;} .green{color:#16a34a;} .red{color:#dc2626;}</style></head><body><h1>${title}</h1>${content}</body></html>`);
+      win.document.close();
+      win.print();
     }
 
-    // Fechar modais ao clicar fora
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-      modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+    // -------------------- DASHBOARD MODAL + COMPARTILHAMENTO --------------------
+    function openDashboard() {
+      let data, title;
+      if (currentReportType === 'month') {
+        const monthValue = document.getElementById('reportMonth').value;
+        if (!monthValue) return;
+        const [year, month] = monthValue.split('-').map(Number);
+        data = state.history.filter(h => {
+          const d = new Date(h.closedAt);
+          return d.getFullYear() === year && d.getMonth() + 1 === month;
+        });
+        title = `Dashboard - ${formatMonthYear(monthValue)}`;
+      } else {
+        const year = parseInt(document.getElementById('reportYear').value);
+        data = state.history.filter(h => new Date(h.closedAt).getFullYear() === year);
+        title = `Dashboard - ${year}`;
+      }
+      if (!data.length) { alert('Não há dados para o período selecionado.'); return; }
+      currentDashboardData = data;
+      currentDashboardTitle = title;
+      document.getElementById('dashboardPopupContent').innerHTML = generateDashboardHtmlForModal(data, title);
+      openModal('modalDashboardPopup');
+      setTimeout(() => renderDashboardChart(), 100);
+    }
+    function generateDashboardHtmlForModal(data, title) {
+      const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
+      const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0);
+      const totalDiff = data.reduce((s,h)=>s+h.difference,0);
+      const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0);
+      const sorted = [...data].sort((a,b)=>new Date(a.closedAt)-new Date(b.closedAt));
+      return `
+        <div class="cards">
+          <div class="card"><h3>Fechamentos</h3><div class="value">${data.length}</div></div>
+          <div class="card"><h3>Total Entradas</h3><div class="value green">${formatCurrency(totalIncome)}</div></div>
+          <div class="card"><h3>Total Saídas</h3><div class="value red">${formatCurrency(totalExpenses)}</div></div>
+          <div class="card"><h3>Diferença Total</h3><div class="value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div>
+          <div class="card"><h3>Venda Total</h3><div class="value green">${formatCurrency(totalSales)}</div></div>
+        </div>
+        <div class="chart-container"><canvas id="dashboardChartCanvas" style="max-height:300px;width:100%;"></canvas></div>
+        <table><thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead><tbody>
+          ${sorted.map(h => `
+            <tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>
+          `).join('')}
+        </tbody></table>
+      `;
+    }
+    function renderDashboardChart() {
+      const canvas = document.getElementById('dashboardChartCanvas');
+      if (!canvas || !currentDashboardData) return;
+      const ctx = canvas.getContext('2d');
+      const sorted = [...currentDashboardData].sort((a,b)=>new Date(a.closedAt)-new Date(b.closedAt));
+      const labels = sorted.map(h=>formatDate(h.closedAt));
+      const incomeData = sorted.map(h=>h.totalIncome);
+      const expensesData = sorted.map(h=>h.totalExpenses);
+      const salesData = sorted.map(h=>h.dailyTotalSales||0);
+      if (window.dashboardChart) window.dashboardChart.destroy();
+      window.dashboardChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Entradas', data: incomeData, backgroundColor: '#22c55e', borderRadius: 6 },
+            { label: 'Saídas', data: expensesData, backgroundColor: '#ef4444', borderRadius: 6 },
+            { label: 'Venda Diária', data: salesData, backgroundColor: '#f59e0b', borderRadius: 6 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+      });
+    }
+    function shareDashboardAsHtml() {
+      if (!currentDashboardData) return;
+      const html = generateStandaloneDashboardHtml(currentDashboardData, currentDashboardTitle);
+      const blob = new Blob([html], { type: 'text/html' });
+      const file = new File([blob], 'dashboard.html', { type: 'text/html' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ title: currentDashboardTitle, files: [file] }).catch(e=>console.log(e));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'dashboard.html';
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Arquivo HTML gerado e baixado. Compartilhe o arquivo para visualizar o dashboard.');
+      }
+    }
+    function generateStandaloneDashboardHtml(data, title) {
+      const totalIncome = data.reduce((s,h)=>s+h.totalIncome,0);
+      const totalExpenses = data.reduce((s,h)=>s+h.totalExpenses,0);
+      const totalDiff = data.reduce((s,h)=>s+h.difference,0);
+      const totalSales = data.reduce((s,h)=>s+(h.dailyTotalSales||0),0);
+      const sorted = [...data].sort((a,b)=>new Date(a.closedAt)-new Date(b.closedAt));
+      const labels = sorted.map(h=>formatDate(h.closedAt));
+      const incomeData = sorted.map(h=>h.totalIncome);
+      const expensesData = sorted.map(h=>h.totalExpenses);
+      const salesData = sorted.map(h=>h.dailyTotalSales||0);
+      return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${title}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding:20px;}.container{max-width:1200px;margin:0 auto;}h1{text-align:center;color:#16a34a;margin-bottom:20px;}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:30px;}.card{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);}.card h3{color:#64748b;margin-bottom:8px;}.card .value{font-size:1.8rem;font-weight:bold;}.green{color:#22c55e;}.red{color:#ef4444;}.chart-container{background:white;border-radius:16px;padding:20px;margin-bottom:30px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}canvas{max-height:400px;width:100%;}table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;}th,td{padding:12px;border-bottom:1px solid #e2e8f0;text-align:left;}th{background:#f8fafc;}
+</style>
+</head>
+<body><div class="container"><h1>${title}</h1><div class="cards"><div class="card"><h3>Fechamentos</h3><div class="value">${data.length}</div></div><div class="card"><h3>Total Entradas</h3><div class="value green">${formatCurrency(totalIncome)}</div></div><div class="card"><h3>Total Saídas</h3><div class="value red">${formatCurrency(totalExpenses)}</div></div><div class="card"><h3>Diferença Total</h3><div class="value ${totalDiff>=0?'green':'red'}">${formatCurrency(totalDiff)}</div></div><div class="card"><h3>Venda Total</h3><div class="value green">${formatCurrency(totalSales)}</div></div></div><div class="chart-container"><canvas id="chartCanvas"></canvas></div><table><thead><tr><th>Data</th><th>Operador</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Diferença</th><th>Venda Diária</th></tr></thead><tbody>${sorted.map(h=>`<tr><td>${formatDate(h.closedAt)}</td><td>${h.operatorName}</td><td class="green">${formatCurrency(h.totalIncome)}</td><td class="red">${formatCurrency(h.totalExpenses)}</td><td>${formatCurrency(h.closingBalance)}</td><td class="${h.difference>=0?'green':'red'}">${formatCurrency(h.difference)}</td><td class="green">${formatCurrency(h.dailyTotalSales||0)}</td></tr>`).join('')}</tbody></table></div><script>const ctx=document.getElementById('chartCanvas').getContext('2d');new Chart(ctx,{type:'bar',data:{labels:${JSON.stringify(labels)},datasets:[{label:'Entradas',data:${JSON.stringify(incomeData)},backgroundColor:'#22c55e'},{label:'Saídas',data:${JSON.stringify(expensesData)},backgroundColor:'#ef4444'},{label:'Venda Diária',data:${JSON.stringify(salesData)},backgroundColor:'#f59e0b'}]},options:{responsive:true,maintainAspectRatio:true}});<\/script></body></html>`;
+    }
+
+    // -------------------- UTILITÁRIOS --------------------
+    function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(v||0); }
+    function formatDate(d) { return new Date(d).toLocaleDateString('pt-BR'); }
+    function formatTime(d) { return new Date(d).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}); }
+    function formatMonthYear(mv) { const [y,m]=mv.split('-'); const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return `${months[parseInt(m)-1]} ${y}`; }
+    function openModal(id) { document.getElementById(id).classList.add('active'); if(id==='modalCloseRegister') updateCloseModal(); if(id==='modalMonthlyReport') generateReport(); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function setupForms() {
+      document.getElementById('formOpenRegister').addEventListener('submit', e=>{ e.preventDefault(); openRegister(); });
+      document.getElementById('formAddTransaction').addEventListener('submit', e=>{ e.preventDefault(); addTransaction(); });
+      document.getElementById('formCloseRegister').addEventListener('submit', e=>{ e.preventDefault(); closeRegister(); });
+      document.getElementById('formEditHistory').addEventListener('submit', e=>{ e.preventDefault(); saveEditHistory(); });
+      document.getElementById('transactionFile').addEventListener('change', e=>{
+        const file=e.target.files[0];
+        if(file){ state.selectedFile=file; document.getElementById('fileName').textContent=file.name; document.getElementById('filePreview').style.display='flex'; }
+      });
+      const now=new Date(); document.getElementById('reportMonth').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    }
+    document.querySelectorAll('.modal-overlay').forEach(modal=>{ modal.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('active'); }); });
+    document.addEventListener('DOMContentLoaded',()=>{
+      loadFromStorage(); updateCurrentDate(); checkOpenRegister(); setupForms(); populateYearSelect(); setupNavigation();
+      document.getElementById('shareDashboardBtn').addEventListener('click', shareDashboardAsHtml);
     });
   </script>
 </body>
